@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace ATM.DAL.Database.QueryStrings
+﻿namespace ATM.DAL.Database.QueryStrings
 {
-    internal class InsertQuery
+    public class InsertQuery
     {
+        public static string UsersTableInsertQuery { get; }
     }
 }

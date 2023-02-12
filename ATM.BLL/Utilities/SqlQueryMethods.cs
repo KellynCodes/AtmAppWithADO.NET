@@ -9,7 +9,7 @@ namespace ATM.BLL.Utilities
     public class SqlQueryMethods
     {
         private readonly static ICreateDatabase createDatabase = new CreateDatabase(new DbContext());
-        public static async Task Run()
+        public static async Task<string> Run()
         {
             await createDatabase.CreateDB("Atm", AtmDbQueryString);
 
@@ -20,6 +20,7 @@ namespace ATM.BLL.Utilities
             await createDatabase.CreateTable("ThirdParty", ThirdPartyQueryString);
             await createDatabase.CreateTable("Bank", BankTableQueryString);
             await createDatabase.CreateTable("Bill", BillTableQueryString);
+            return "Query was was successfull";
         }
     }
 }

@@ -8,6 +8,8 @@ using ATM.BLL.Utilities;
 using ATM.DAL.Database;
 using ATM.DAL.Database.DbQueries;
 using System.Threading.Tasks;
+using ATM.DAL.Database.QueryObject;
+using System.Collections.Generic;
 
 namespace ATM.BLL.Implementation
 {
@@ -32,11 +34,13 @@ namespace ATM.BLL.Implementation
 
         public AtmService(IAdminService adminService) => _adminService = adminService;
         public AtmService() { }
-        public void Start()
+        public async Task Start()
         {
             GetAtmData.GetData().AvailableCash = 6_000.90m;
             Console.WriteLine($"{GetAtmData.GetData().Name} has booted!");
             Console.WriteLine("Insert Card!");
+          // string DbQueryResult = await SqlQueryMethods.Run();
+          //  Console.WriteLine(DbQueryResult);
         }
 
         public void CheckBalance()
@@ -459,12 +463,12 @@ namespace ATM.BLL.Implementation
 
         public async Task CreateAccount()
         {
-            long userID = AtmDB.Users.Last().Id + 1;
             string accountNumber = createAccount.AccountNumber();
             AccountType accountType = createAccount.GetAccountType();
             string email = createAccount.GetEmail();
             string fullName = createAccount.GetFullName();
             string userName = createAccount.UserName();
+            string phoneNumber = createAccount.PhoneNumber();
             UserPassword: string userPassword = createAccount.GetPassword();
             string ReEnteredPassword = createAccount.ConfirmPassword();
             if(userPassword == ReEnteredPassword)
@@ -479,21 +483,26 @@ namespace ATM.BLL.Implementation
           EnterPin: string pin = createAccount.GetPin();
             decimal Balance = 0.00m;
             string createdDate = DateTime.Now.ToLongDateString();
+            IList<UserAndAccount> UserInfo = new List<UserAndAccount>() {
+           new UserAndAccount {
+               FullName = fullName,
+               Email = email,
+               Password = userPassword,
+               PhoneNumber = phoneNumber,
+                UserName = userName,
+                AccountNo = accountNumber,
+                AccountType = accountType,
+                Balance = Balance,
+                Pin = pin,
+                CreatedDate = createdDate
+            }};
 
-            var NewUser = new Customer(id: userID, password: userPassword) { FullName = fullName, Email = email, };
-            var NewAccount = new Account {Id = userID, UserId = userID, UserName = userName, AccountNo = accountNumber, AccountType = accountType, Pin = pin, Balance = Balance, CreatedDate = createdDate };
 
-            string Query = $@"USE aAtm; INSERT INTO Users";
-          await DbQuery.Query(Query);
-
-
-
-            AtmDB.Users.Add(NewUser);
-            AtmDB.Account.Add(NewAccount);
+            await DbQuery.UserInsert(UserInfo);
+            await DbQuery.AccountInsert(UserInfo);
             message.Success($"{userName} your account have been created successfully!.");
-            message.AlertInfo($"Your ID is {userID} and your account number is {accountNumber}");
-            message.AlertInfo($"Make sure you copy your account [{accountNumber}] and also memorize your user ID");
-            continueOrEndProcess.Answer();
+            message.AlertInfo($"Your account number is {accountNumber}");
+            message.AlertInfo($"Make sure you copy your account [{accountNumber}]");
         }
 
         public void ReloadCash(decimal amount)

@@ -1,9 +1,8 @@
 ﻿using ATM.DAL.Enums;
-using System;
 
 namespace ATM.DAL.Database.QueryObject
 {
-    internal class UserAndAccount
+    public class UserAndAccount
     {
         public string FullName { get; set; }
         public string Email { get; set; }
@@ -16,7 +15,8 @@ namespace ATM.DAL.Database.QueryObject
         public string UserName { get; set; }
         public string AccountNo { get; set; }
         public AccountType AccountType { get; set; }
+        public decimal Balance { get; set; }
         public string Pin { get; set; }
-        public DateTime CreatedDate { get; set; }
+        public string CreatedDate { get; set; }
     }
 }

@@ -100,7 +100,7 @@ namespace ATM.BLL.Implementation
         Phone: Console.WriteLine("Enter your phone number.");
             if (int.TryParse(Console.ReadLine(), out int phone))
             {
-                if (phone > 11)
+                if (phone.ToString().Trim().Length > 11)
                 {
                     Console.WriteLine("Phone number should not be more than eleven.");
                     goto Phone;

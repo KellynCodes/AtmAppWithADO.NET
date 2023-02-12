@@ -5,7 +5,7 @@ namespace ATM.BLL.Interfaces
 {
     public interface IAtmService
     {
-        void Start();
+        Task Start();
         void CheckBalance();
         void Withdraw();
         void Transfer();
