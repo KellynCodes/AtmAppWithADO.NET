@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace ATM.DAL.Database.Implementation
 {
-    public class CrudOperation : ICrudOperation
+    public class CrudOperation 
     {
         private readonly DbContext _dbContext;
         private bool _disposed;
@@ -21,7 +21,7 @@ namespace ATM.DAL.Database.Implementation
         public async Task CreateUser(User user)
         {
 
-            SqlConnection sqlConn = await _dbContext.OpenConnection();
+            SqlConnection sqlConn = _dbContext.OpenConnection();
 
 
             string insertQuery =
@@ -31,8 +31,8 @@ namespace ATM.DAL.Database.Implementation
 
             using (SqlCommand command = new SqlCommand(insertQuery, sqlConn))
             {
-                    command.Parameters.AddRange(new SqlParameter[]
-                    {
+                command.Parameters.AddRange(new SqlParameter[]
+                {
                 new SqlParameter
                 {
                     ParameterName = "@UserID",
@@ -69,10 +69,10 @@ namespace ATM.DAL.Database.Implementation
                     Size = 50
                 },
 
-                    });
+                });
 
-                    long userId = (long)await command.ExecuteScalarAsync();
-                    Console.WriteLine(userId > 0 ? $"User Created Successfully" : $"User not created");
+                long userId = (long)await command.ExecuteScalarAsync();
+                Console.WriteLine(userId > 0 ? $"User Created Successfully" : $"User not created");
             }
 
         }
@@ -80,7 +80,7 @@ namespace ATM.DAL.Database.Implementation
         public async Task<long> UpdateUser(int userId, User user)
         {
 
-            SqlConnection sqlConn = await _dbContext.OpenConnection();
+            SqlConnection sqlConn = _dbContext.OpenConnection();
 
 
 
@@ -135,9 +135,9 @@ namespace ATM.DAL.Database.Implementation
             }
         }
 
-        public async Task DeleteUser(int UserId)
+        public void DeleteUser(int UserId)
         {
-            SqlConnection sqlConn = await _dbContext.OpenConnection();
+            SqlConnection sqlConn = _dbContext.OpenConnection();
 
             string deleteQuery = $"DELETE FROM Users WHERE UserId = @UserId ";
             using (SqlCommand command = new SqlCommand(deleteQuery, sqlConn))
@@ -160,9 +160,9 @@ namespace ATM.DAL.Database.Implementation
             }
         }
 
-        public async Task<User> GetUser(int id)
+        public User GetUser(int id)
         {
-            SqlConnection sqlConn = await _dbContext.OpenConnection();
+            SqlConnection sqlConn = _dbContext.OpenConnection();
             string getUserQuery = $"SELECT Users.FirstName, Users.LastName, Users.UserName, Users.PhoneNumber, Users.ProfilePicure, Users.Country FROM Users WHERE UserId = @UserId ";
             using (SqlCommand command = new SqlCommand(getUserQuery, sqlConn))
             {
@@ -178,7 +178,7 @@ namespace ATM.DAL.Database.Implementation
                 }
                 });
                 User user = new User();
-                using (SqlDataReader dataReader = await command.ExecuteReaderAsync())
+                using (SqlDataReader dataReader = command.ExecuteReader())
                 {
                     while (dataReader.Read())
                     {
@@ -195,7 +195,7 @@ namespace ATM.DAL.Database.Implementation
         public async Task<IEnumerable<User>> GetUsers()
         {
 
-            SqlConnection sqlConn = await _dbContext.OpenConnection();
+            SqlConnection sqlConn = _dbContext.OpenConnection();
             string getAllUsersQuery = $"SELECT Users.FirstName, Users.LastName, Users.UserName, Users.PhoneNumber, Users.ProfilePicure, Users.Country FROM Users WHERE UserId = @UserId ";
             using (SqlCommand command = new SqlCommand(getAllUsersQuery, sqlConn))
             {

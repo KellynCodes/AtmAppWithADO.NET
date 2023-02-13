@@ -5,7 +5,7 @@ namespace ATM.BLL.Interfaces
 {
     public interface IAuthService
     {
-        void Login();
+        Task Login();
 
         Task ResetPin();
 

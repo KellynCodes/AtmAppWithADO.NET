@@ -1,7 +1,6 @@
-﻿using ATM.DAL.Database.QueryObject;
+﻿using ATM.DAL.Models;
 using Microsoft.Data.SqlClient;
 using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
 
@@ -10,16 +9,15 @@ namespace ATM.DAL.Database.DbQueries
     public class DbQuery
     {
         private static readonly DbContext dbContext = new DbContext();
-        public static async Task UserInsert(IList<UserAndAccount> queryObjects)
+        public static async Task UserInsertAsync(User queryObject)
         {
             string query = $@"USE Atm;
-	insert into Users(FullName, Email, Password, PhoneNumber, UserBank, Role) values('@FullName', '@Email', '@Password', '@PhoneNumber', '@UserBank', '@Role');
+	INSERT INTO Users(FullName, Email, Password, PhoneNumber, UserBank, Role) VALUES(@FullName, @Email, @Password, @PhoneNumber, @UserBank, @Role);
 ";
-            SqlConnection sqlConnection = await dbContext.OpenConnection();
+            SqlConnection sqlConnection = dbContext.OpenConnection();
 
             using (SqlCommand sqlCommand = new SqlCommand(query, sqlConnection))
             {
-                foreach(var queryObject in queryObjects) { 
                 sqlCommand.Parameters.AddRange(new SqlParameter[]
                 {
                     new SqlParameter
@@ -75,7 +73,6 @@ namespace ATM.DAL.Database.DbQueries
                     Size = 50
                     },
                 });
-                    }
 
                 sqlCommand.ExecuteNonQuery();
                 string Message = "Query executed successfully.";
@@ -83,26 +80,23 @@ namespace ATM.DAL.Database.DbQueries
             }
         }
 
-        public static async Task AccountInsert(IList<UserAndAccount> queryObjects)
+        public static async Task AccountInsertAsync(Account queryObject)
         {
-            string query = $@"USE Atm;
-	INSERT INTO Account(UserName, AccountNo, AccountType, Balance, Pin, CreateDate) values('@UserName', '@AccountNo', '@AccountType', @Balance, '@Pin', '@CreatedDate');
-";
-            SqlConnection sqlConnection = await dbContext.OpenConnection();
+            string query = $@"USE Atm; 
+INSERT INTO Account(UserId, UserName, AccountNo, AccountType, Balance, Pin, CreatedDate) VALUES('1', @UserName, @AccountNo, @AccountType, @Balance, @Pin, @CreatedDate');";
+            SqlConnection sqlConnection = dbContext.OpenConnection();
 
             using (SqlCommand sqlCommand = new SqlCommand(query, sqlConnection))
             {
-                foreach (var queryObject in queryObjects)
+                sqlCommand.Parameters.AddRange(new SqlParameter[]
                 {
-                    sqlCommand.Parameters.AddRange(new SqlParameter[]
-                    {
-                    new SqlParameter
+                        new SqlParameter
                     {
                     ParameterName = "@UserName",
                     Value = queryObject.UserName,
                     SqlDbType = SqlDbType.VarChar,
                     Direction = ParameterDirection.Input,
-                    Size = 50
+                    Size = 100
                     },
 
                     new SqlParameter
@@ -111,7 +105,7 @@ namespace ATM.DAL.Database.DbQueries
                     Value = queryObject.AccountNo,
                     SqlDbType = SqlDbType.VarChar,
                     Direction = ParameterDirection.Input,
-                    Size = 100
+                    Size = 50
                     },
 
                     new SqlParameter
@@ -127,15 +121,16 @@ namespace ATM.DAL.Database.DbQueries
                         ParameterName = "@Balance",
                         Value = queryObject.Balance,
                         SqlDbType = SqlDbType.Decimal,
+                        Size = 43950335,
                     },
 
                     new SqlParameter
                     {
                     ParameterName = "@Pin",
                     Value = queryObject.Pin,
-                    SqlDbType = SqlDbType.NVarChar,
+                    SqlDbType = SqlDbType.VarChar,
                     Direction = ParameterDirection.Input,
-                    Size = 50
+                    Size  = int.MaxValue
                     },
 
                     new SqlParameter
@@ -144,15 +139,19 @@ namespace ATM.DAL.Database.DbQueries
                     Value =  queryObject.CreatedDate,
                     SqlDbType = SqlDbType.VarChar,
                     Direction = ParameterDirection.Input,
-                    Size = 50
+                    Size = 100
                     },
-                    });
-                }
+                });
 
-                sqlCommand.ExecuteNonQuery();
-                string Message = "Query executed successfully.";
+                string Message = await sqlCommand.ExecuteNonQueryAsync() > 1 ? "Query executed successfully." : "Query was not successfull.";
                 Console.WriteLine(Message);
             }
+        }
+
+        public static Account SelectAccountAsync(string accountNo, string Pin, string accountTpe)
+        {
+
+            return new Account();
         }
     }
 }

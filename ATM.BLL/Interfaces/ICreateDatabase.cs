@@ -7,7 +7,7 @@ namespace ATM.BLL.Interface
     {
         Task CreateDB(string dataBase, string SqlQuery);
         Task DeleteDB(string dataBase, string SqlQuery);
-        Task CreateTable(string table, string SqlQuery);
+        Task CreateTableAsync(string table, string SqlQuery);
         Task DeleteTable(string table, string SqlQuery);
     }
 }

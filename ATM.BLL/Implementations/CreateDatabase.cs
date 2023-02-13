@@ -19,7 +19,7 @@ namespace ATM.BLL.Implementation
 
        public async Task CreateDB(string dataBase, string SqlQuery)
         {
-            SqlConnection DbConnection = await _dbContext.OpenConnection();
+            SqlConnection DbConnection = _dbContext.OpenConnection();
 
             using (SqlCommand command = new SqlCommand(SqlQuery, DbConnection))
             {
@@ -30,9 +30,9 @@ namespace ATM.BLL.Implementation
 
         }
 
-       public async Task CreateTable(string table, string SqlQuery)
+       public async Task CreateTableAsync(string table, string SqlQuery)
         {
-            SqlConnection DbConnection = await _dbContext.OpenConnection();
+            SqlConnection DbConnection =  _dbContext.OpenConnection();
 
             using (SqlCommand command = new SqlCommand(SqlQuery, DbConnection))
             {
@@ -45,7 +45,7 @@ namespace ATM.BLL.Implementation
 
         public async Task DeleteDB(string dataBase, string SqlQuery)
         {
-            SqlConnection DbConnection = await _dbContext.OpenConnection();
+            SqlConnection DbConnection =  _dbContext.OpenConnection();
 
             using (SqlCommand command = new SqlCommand(SqlQuery, DbConnection))
             {
@@ -57,7 +57,7 @@ namespace ATM.BLL.Implementation
 
        public async Task DeleteTable(string table, string SqlQuery)
         {
-            SqlConnection DbConnection = await _dbContext.OpenConnection();
+            SqlConnection DbConnection =  _dbContext.OpenConnection();
 
             using (SqlCommand command = new SqlCommand(SqlQuery, DbConnection))
             {

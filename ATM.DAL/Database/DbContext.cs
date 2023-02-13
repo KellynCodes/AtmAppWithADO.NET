@@ -23,10 +23,10 @@ namespace ATM.DAL.Database
             _connString = connString;
         }
 
-        public async Task<SqlConnection> OpenConnection()
+        public SqlConnection OpenConnection()
         {
             _dbConnection = new SqlConnection(_connString);
-            await _dbConnection.OpenAsync();
+             _dbConnection.Open();
             return _dbConnection;
         }
 

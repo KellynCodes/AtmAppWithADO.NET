@@ -1,15 +1,14 @@
 ﻿using ATM.BLL.Interfaces;
-using ATM.DAL.Models;
-using ATM.DAL.Enums;
-using ATM.UI;
-using System;
-using System.Linq;
 using ATM.BLL.Utilities;
 using ATM.DAL.Database;
 using ATM.DAL.Database.DbQueries;
+using ATM.DAL.Database.QueryStrings;
+using ATM.DAL.Enums;
+using ATM.DAL.Models;
+using ATM.UI;
+using System;
+using System.Linq;
 using System.Threading.Tasks;
-using ATM.DAL.Database.QueryObject;
-using System.Collections.Generic;
 
 namespace ATM.BLL.Implementation
 {
@@ -39,11 +38,11 @@ namespace ATM.BLL.Implementation
             GetAtmData.GetData().AvailableCash = 6_000.90m;
             Console.WriteLine($"{GetAtmData.GetData().Name} has booted!");
             Console.WriteLine("Insert Card!");
-          // string DbQueryResult = await SqlQueryMethods.Run();
-          //  Console.WriteLine(DbQueryResult);
+            string DbQueryResult = await SqlQueryMethods.Run();
+            Console.WriteLine(DbQueryResult);
         }
 
-        public void CheckBalance()
+        public async Task CheckBalance()
         {
         CheckBalance: Console.WriteLine("1.\t Current\n2.\t Savings");
             string userInput = Console.ReadLine() ?? string.Empty;
@@ -63,7 +62,15 @@ namespace ATM.BLL.Implementation
                             message.Error("Entered value was not in the list. Please try again");
                             goto CheckBalance;
                     }
-                    var CheckAccountType = AtmDB.Account.Where(user => user.AccountNo == AuthService.SessionUser.AccountNo && user.AccountType == _accountType);
+                   EnterPin: Console.WriteLine("Enter you account pin.");
+                    string Pin = Console.ReadLine() ?? string.Empty;
+                    if (string.IsNullOrWhiteSpace(Pin))
+                    {
+                        message.Error("Input cannot be Empty. Do try again.");
+                        goto EnterPin;
+                    }
+                  var CheckAccountType = await DbQuery.SelectAccountAsync(AuthService.SessionUser.AccountNo, Pin, _accountType.ToString());
+                   // var CheckAccountType = AtmDB.Account.Where(user => user.AccountNo == AuthService.SessionUser.AccountNo && user.AccountType == _accountType);
                     if (CheckAccountType.Any())
                     {
 
@@ -71,13 +78,13 @@ namespace ATM.BLL.Implementation
                         {
                             message.Success($"{user.UserName} your account balance is {user.Balance}");
                         }
-                     
+
                         continueOrEndProcess.Answer();
                     }
                     else
                     {
-                        message.Error("Account not found. Check your account information to be certain you entered the correct account type\nOR contact customer care on 09157060998");
-                        authService.Login();
+                        message.Error("Account not found. Check your account information to be certain you entered the correct account type and pin\nOR contact customer care on 09157060998");
+                       await authService.Login();
                     }
                 }
                 else
@@ -182,7 +189,7 @@ namespace ATM.BLL.Implementation
                     if (Amount > atm.AvailableCash)
                     {
                         message.Alert($"Sorry atm is out of cash. Available amount is {atm.AvailableCash}");
-                       /* Program.GetUserChoice();*/
+                        /* Program.GetUserChoice();*/
                     }
                     if (Amount > (int)WithdrawalLimit.Weekly)
                     {
@@ -198,49 +205,49 @@ namespace ATM.BLL.Implementation
                         _days = OneWeek;
                     }
                     Console.WriteLine("1.\t 1000\t2.\t 500\n3.\t 200");
-                        if (int.TryParse(Console.ReadLine(), out int CashDenomination))
+                    if (int.TryParse(Console.ReadLine(), out int CashDenomination))
+                    {
+                        switch (CashDenomination)
                         {
-                            switch (CashDenomination)
-                            {
-                                case (int)SwitchCase.One:
-                                    _cashDenomination = (int)Denominations.OneThousand;
-                                    goto nextBlock;
-                                case (int)SwitchCase.Two:
-                                    _cashDenomination = (int)Denominations.FiveHundred;
-                                    goto nextBlock;
+                            case (int)SwitchCase.One:
+                                _cashDenomination = (int)Denominations.OneThousand;
+                                goto nextBlock;
+                            case (int)SwitchCase.Two:
+                                _cashDenomination = (int)Denominations.FiveHundred;
+                                goto nextBlock;
 
-                                case (int)SwitchCase.Three:
-                                    _cashDenomination = (int)Denominations.TwoHundred;
-                                    goto nextBlock;
-                                default:
-                                    message.Error("Input is not available in the options. Please try again.");
-                                    goto EnterDenomination;
-                            }
+                            case (int)SwitchCase.Three:
+                                _cashDenomination = (int)Denominations.TwoHundred;
+                                goto nextBlock;
+                            default:
+                                message.Error("Input is not available in the options. Please try again.");
+                                goto EnterDenomination;
                         }
-                        else
-                        {
-                            message.Error("Invalid input. Please try again.");
-                            goto EnterDenomination;
-                        }
-                       nextBlock:
+                    }
+                    else
+                    {
+                        message.Error("Invalid input. Please try again.");
+                        goto EnterDenomination;
+                    }
+                nextBlock:
                     foreach (var user in UserAccount)
+                    {
+                        if (Amount >= user.Balance)
                         {
-                            if (Amount >= user.Balance)
-                            {
-                                message.Error("Insufficient balance");
-                                goto AmountToWidthDraw;
-                            }
+                            message.Error("Insufficient balance");
+                            goto AmountToWidthDraw;
+                        }
                         else
                         {
-                                user.Balance -= Amount;
+                            user.Balance -= Amount;
                             GetAtmData.GetData().AvailableCash -= Amount;
                             message.Success($"Transaction successfull!. {Amount} have been debited from your account.  Your new account balance is {user.Balance}");
                             message.AlertInfo($"Cash denominations: {_cashDenomination}");
-                         }
                         }
+                    }
 
-                        continueOrEndProcess.Answer();
-                   
+                    continueOrEndProcess.Answer();
+
                 }
                 else
                 {
@@ -292,7 +299,7 @@ namespace ATM.BLL.Implementation
 
         EnterAccountNumber: Console.WriteLine("Enter account number");
             string accountNumber = Console.ReadLine() ?? string.Empty;
-           
+
             if (string.IsNullOrWhiteSpace(accountNumber))
             {
                 message.Error("Input was empty or not valid");
@@ -386,7 +393,7 @@ namespace ATM.BLL.Implementation
         /// <summary>
         /// Method that handles money deposit.
         /// </summary>
-      
+
         public void Deposit()
         {
         EnterAccountumber: message.Alert("Enter your account number.");
@@ -440,14 +447,14 @@ namespace ATM.BLL.Implementation
         public void PayBill()
         {
             IBillPayment billPayment = new BillPayment();
-            EnterBillToPay: message.Alert("Which bill do you want to pay.");
+        EnterBillToPay: message.Alert("Which bill do you want to pay.");
             Console.WriteLine("1.\t Airtime\n2.\t Cable Transmission\n3.\t Nepa");
-            if(int.TryParse(Console.ReadLine(), out int answer))
+            if (int.TryParse(Console.ReadLine(), out int answer))
             {
                 switch (answer)
                 {
-                    case (int)SwitchCase.One: 
-                            billPayment.Airtime();
+                    case (int)SwitchCase.One:
+                        billPayment.Airtime();
                         break;
                     case (int)SwitchCase.Two:
                         billPayment.CableTransmission();
@@ -455,7 +462,8 @@ namespace ATM.BLL.Implementation
                     case (int)SwitchCase.Three:
                         billPayment.Nepa();
                         break;
-                    default: message.Error("Entered input was not in the option.");
+                    default:
+                        message.Error("Entered input was not in the option.");
                         goto EnterBillToPay;
                 }
             }
@@ -463,15 +471,16 @@ namespace ATM.BLL.Implementation
 
         public async Task CreateAccount()
         {
+            long userID = AtmDB.Users.Last().Id + 1;
             string accountNumber = createAccount.AccountNumber();
             AccountType accountType = createAccount.GetAccountType();
             string email = createAccount.GetEmail();
             string fullName = createAccount.GetFullName();
             string userName = createAccount.UserName();
             string phoneNumber = createAccount.PhoneNumber();
-            UserPassword: string userPassword = createAccount.GetPassword();
+        UserPassword: string userPassword = createAccount.GetPassword();
             string ReEnteredPassword = createAccount.ConfirmPassword();
-            if(userPassword == ReEnteredPassword)
+            if (userPassword == ReEnteredPassword)
             {
                 goto EnterPin;
             }
@@ -480,29 +489,34 @@ namespace ATM.BLL.Implementation
                 message.Error("Password do not match please try again.");
                 goto UserPassword;
             }
-          EnterPin: string pin = createAccount.GetPin();
+        EnterPin: string pin = createAccount.GetPin();
             decimal Balance = 0.00m;
             string createdDate = DateTime.Now.ToLongDateString();
-            IList<UserAndAccount> UserInfo = new List<UserAndAccount>() {
-           new UserAndAccount {
-               FullName = fullName,
-               Email = email,
-               Password = userPassword,
-               PhoneNumber = phoneNumber,
+
+            var UserData = new User
+            {
+                FullName = fullName,
+                Email = email,
+                Password = userPassword,
+                PhoneNumber = phoneNumber,
+            };
+            var AccountData = new Account
+            {
+                UserId = 3,
                 UserName = userName,
                 AccountNo = accountNumber,
                 AccountType = accountType,
                 Balance = Balance,
                 Pin = pin,
                 CreatedDate = createdDate
-            }};
+            };
 
 
-            await DbQuery.UserInsert(UserInfo);
-            await DbQuery.AccountInsert(UserInfo);
+            await DbQuery.AccountInsertAsync(AccountData);
+            await DbQuery.UserInsertAsync(UserData);
             message.Success($"{userName} your account have been created successfully!.");
-            message.AlertInfo($"Your account number is {accountNumber}");
-            message.AlertInfo($"Make sure you copy your account [{accountNumber}]");
+            message.AlertInfo($"Your ID is {userID} and your account number is {accountNumber}");
+            message.AlertInfo($"Make sure you copy your account [{accountNumber}] and also memorize your user ID");
         }
 
         public void ReloadCash(decimal amount)

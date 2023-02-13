@@ -13,14 +13,14 @@ namespace ATM.BLL.Utilities
         {
             await createDatabase.CreateDB("Atm", AtmDbQueryString);
 
-            await createDatabase.CreateTable("Users", UserTableQueryString);
-            await createDatabase.CreateTable("Account", AccountTableQueryString);
-            await createDatabase.CreateTable("Admin", AdminTableQueryString);
-            await createDatabase.CreateTable("Customer", CustomerTableQueryString);
-            await createDatabase.CreateTable("ThirdParty", ThirdPartyQueryString);
-            await createDatabase.CreateTable("Bank", BankTableQueryString);
-            await createDatabase.CreateTable("Bill", BillTableQueryString);
-            return "Query was was successfull";
+            await createDatabase.CreateTableAsync("Users", UserTableQueryString);
+            await createDatabase.CreateTableAsync("Account", AccountTableQueryString);
+            await createDatabase.CreateTableAsync("Admin", AdminTableQueryString);
+            await createDatabase.CreateTableAsync("Customer", CustomerTableQueryString);
+            await createDatabase.CreateTableAsync("ThirdParty", ThirdPartyQueryString);
+            await createDatabase.CreateTableAsync("Bank", BankTableQueryString);
+            await createDatabase.CreateTableAsync("Bill", BillTableQueryString);
+            return "Query was successfull";
         }
     }
 }

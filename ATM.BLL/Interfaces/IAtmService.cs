@@ -1,12 +1,11 @@
-﻿using ATM.DAL.Models;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace ATM.BLL.Interfaces
 {
     public interface IAtmService
     {
         Task Start();
-        void CheckBalance();
+        Task CheckBalance();
         void Withdraw();
         void Transfer();
         void Deposit();

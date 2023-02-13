@@ -16,7 +16,7 @@ namespace ATM.DAL.Models
         public long Id { get; }
         public string FullName { get; set; }
         public string Email { get; set; }
-        public string Password { get; }
+        public string Password { get; set; }
         public string UserBank { get; set; }
         public string PhoneNumber { get; set; }
         public virtual Role Role { get; }
