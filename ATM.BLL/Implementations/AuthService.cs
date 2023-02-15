@@ -13,10 +13,11 @@ namespace ATM.BLL.Implementation
 {
     public class AuthService : IAuthService
     {
-        static readonly IAtmService atmService = new AtmService();
-        public static Account SessionUser { get; set; } = new Account();
-        private readonly static Message message = new Message();
         private readonly static IContinueOrEndProcess continueOrEndProcess = new ContinueOrEndProcess();
+        public static Account SessionUser { get; set; } = new Account();
+        static readonly IAtmService atmService = new AtmService();
+        private readonly static Message message = new Message();
+        private readonly DbQuery dbQuery = new DbQuery(new DbContext());
 
         /// <summary>
         /// Login Validation.
@@ -30,15 +31,15 @@ namespace ATM.BLL.Implementation
                 message.Error("Input was empty or not valid. Please try agian");
                 goto Start;
             }
-        EnterUserID: Console.WriteLine("Enter your account pin.");
+        EnterPin: Console.WriteLine("Enter your account pin.");
             string Pin = Console.ReadLine() ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(AccountNo))
+            if (string.IsNullOrWhiteSpace(Pin))
             {
                 message.Error("Input was empty of not valid. Please try agian");
-                goto EnterUserID;
+                goto EnterPin;
             }
 
-        EnterAccountType: Console.WriteLine("Enter your account pin.");
+        EnterAccountType: Console.WriteLine("Enter your account type.");
             string accountType = Console.ReadLine() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(accountType))
             {
@@ -46,7 +47,7 @@ namespace ATM.BLL.Implementation
                 goto EnterAccountType;
             }
 
-            var UserDetails = await DbQuery.SelectAccountAsync(AccountNo, Pin, accountType);
+            var UserDetails = await dbQuery.SelectAccountAsync(AccountNo, Pin, accountType);
             if (UserDetails != null)
             {
                 foreach (var user in UserDetails)
@@ -70,7 +71,7 @@ namespace ATM.BLL.Implementation
                                 await atmService.CheckBalance();
                                 break;
                             case (int)SwitchCase.Two:
-                                atmService.Withdraw();
+                               await atmService.Withdraw();
                                 break;
                             case (int)SwitchCase.Three:
                                 atmService.Transfer();
@@ -162,7 +163,7 @@ namespace ATM.BLL.Implementation
             {
                 message.Success($"{userInfo.UserName} your pin have been updated successfully");
             }
-            Login();
+            await Login();
         }
         /// <summary>
         /// Logout Users

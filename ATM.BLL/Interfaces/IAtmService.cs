@@ -6,7 +6,7 @@ namespace ATM.BLL.Interfaces
     {
         Task Start();
         Task CheckBalance();
-        void Withdraw();
+        Task Withdraw();
         void Transfer();
         void Deposit();
         void PayBill();

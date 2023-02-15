@@ -1,7 +1,6 @@
 ﻿using Microsoft.Data.SqlClient;
 using System;
 using System.Data;
-using System.Threading.Tasks;
 
 namespace ATM.DAL.Database
 {

@@ -1,157 +1,145 @@
-﻿using ATM.DAL.Models;
+﻿using ATM.DAL.Enums;
+using ATM.DAL.Models;
 using Microsoft.Data.SqlClient;
 using System;
-using System.Data;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace ATM.DAL.Database.DbQueries
 {
     public class DbQuery
     {
-        private static readonly DbContext dbContext = new DbContext();
-        public static async Task UserInsertAsync(User queryObject)
+        private readonly DbContext _dbContext;
+
+        public DbQuery(DbContext dbContext)
         {
-            string query = $@"USE Atm;
+            _dbContext = dbContext;
+        }
+            public async Task CreateUserAndAccountAsync(Account account, User user)
+            {
+                string AccountQuery = $@"USE Atm; 
+INSERT INTO Account(UserId, UserName, AccountNo, AccountType, Balance, Pin, CreatedDate) VALUES('1', @UserName, @AccountNo, @AccountType, @Balance, @Pin, @CreatedDate');";
+                string UserQuery = $@"USE Atm;
 	INSERT INTO Users(FullName, Email, Password, PhoneNumber, UserBank, Role) VALUES(@FullName, @Email, @Password, @PhoneNumber, @UserBank, @Role);
 ";
-            SqlConnection sqlConnection = dbContext.OpenConnection();
+                    SqlConnection sqlConnection = _dbContext.OpenConnection();
+                    SqlTransaction transaction = sqlConnection.BeginTransaction();
 
-            using (SqlCommand sqlCommand = new SqlCommand(query, sqlConnection))
-            {
-                sqlCommand.Parameters.AddRange(new SqlParameter[]
+                try
                 {
-                    new SqlParameter
-                    {
-                    ParameterName = "@FullName",
-                    Value = queryObject.FullName,
-                    SqlDbType = SqlDbType.VarChar,
-                    Direction = ParameterDirection.Input,
-                    Size = 50
-                    },
+                    SqlCommand AccountSqlCommand = new SqlCommand(AccountQuery, sqlConnection, transaction);
+                    SqlCommand UserSqlCommand = new SqlCommand(UserQuery, sqlConnection, transaction);
+                    AccountSqlCommand.Parameters.AddWithValue("@UserName", account.UserName);
+                    AccountSqlCommand.Parameters.AddWithValue("@AccountNo", account.AccountNo);
+                    AccountSqlCommand.Parameters.AddWithValue("@AccountType", account.AccountType);
+                    AccountSqlCommand.Parameters.AddWithValue("@Balance", account.Balance);
+                    AccountSqlCommand.Parameters.AddWithValue("@Pin", account.Pin);
+                    AccountSqlCommand.Parameters.AddWithValue("@CreatedDate", account.CreatedDate);
 
-                    new SqlParameter
-                    {
-                    ParameterName = "@Email",
-                    Value = queryObject.Email,
-                    SqlDbType = SqlDbType.VarChar,
-                    Direction = ParameterDirection.Input,
-                    Size = 100
-                    },
+                    UserSqlCommand.Parameters.AddWithValue("@FullName", user.FullName);
+                    UserSqlCommand.Parameters.AddWithValue("@Email", user.Email);
+                    UserSqlCommand.Parameters.AddWithValue("@Password", user.Password);
+                    UserSqlCommand.Parameters.AddWithValue("@PhoneNumber", user.PhoneNumber);
+                    UserSqlCommand.Parameters.AddWithValue("@UserBank", user.UserBank);
+                    UserSqlCommand.Parameters.AddWithValue("@Role", user.Role);
 
-                    new SqlParameter
-                    {
-                        ParameterName = "@Password",
-                        Value = queryObject.Password,
-                        SqlDbType = SqlDbType.NVarChar,
-                        Size = 500
-                    },
+                    string AccountMessage = await AccountSqlCommand.ExecuteNonQueryAsync() > 1 ? "Account Query executed successfully." : "Account Query was not successfull.";
+                    Console.WriteLine(AccountMessage);
+                    string UserMessage = await AccountSqlCommand.ExecuteNonQueryAsync() > 1 ? "User Query executed successfully." : "User Query was not successfull.";
+                    Console.WriteLine(UserMessage);
 
-                    new SqlParameter
-                    {
-                    ParameterName = "@UserBank",
-                    Value = "Gt bank",
-                    SqlDbType = SqlDbType.VarChar,
-                    Direction = ParameterDirection.Input,
-                    Size = 50
-                    },
-
-                    new SqlParameter
-                    {
-                    ParameterName = "@PhoneNumber",
-                    Value =  queryObject.PhoneNumber,
-                    SqlDbType = SqlDbType.VarChar,
-                    Direction = ParameterDirection.Input,
-                    Size = 50
-                    },
-
-                    new SqlParameter
-                    {
-                    ParameterName = "@Role",
-                    Value = queryObject.Role,
-                    SqlDbType = SqlDbType.VarChar,
-                    Direction = ParameterDirection.Input,
-                    Size = 50
-                    },
-                });
-
-                sqlCommand.ExecuteNonQuery();
-                string Message = "Query executed successfully.";
-                Console.WriteLine(Message);
+                    transaction.Commit();
+                }
+                catch (Exception ex)
+                {  
+                   transaction.Rollback();
+                    Console.WriteLine(ex.Message);
+                }
             }
-        }
 
-        public static async Task AccountInsertAsync(Account queryObject)
-        {
-            string query = $@"USE Atm; 
-INSERT INTO Account(UserId, UserName, AccountNo, AccountType, Balance, Pin, CreatedDate) VALUES('1', @UserName, @AccountNo, @AccountType, @Balance, @Pin, @CreatedDate');";
-            SqlConnection sqlConnection = dbContext.OpenConnection();
-
-            using (SqlCommand sqlCommand = new SqlCommand(query, sqlConnection))
+            public async Task<IEnumerable<Account>> SelectAccountAsync(string accountNo, string Pin, string accountType)
             {
-                sqlCommand.Parameters.AddRange(new SqlParameter[]
+
+                SqlConnection sqlConn = _dbContext.OpenConnection();
+                string getUserQuery = $"USE Atm; SELECT Account.Id, Account.UserId, Account.Pin, Account.UserName, Account.AccountNo, Account.Balance, Account.CreatedDate FROM Account WHERE AccountNo = @AccountNo AND Pin = @Pin AND AccountType = @AccountType";
+                IList<Account> account = new List<Account>();
+                try
                 {
-                        new SqlParameter
+                    using (SqlCommand command = new SqlCommand(getUserQuery, sqlConn))
                     {
-                    ParameterName = "@UserName",
-                    Value = queryObject.UserName,
-                    SqlDbType = SqlDbType.VarChar,
-                    Direction = ParameterDirection.Input,
-                    Size = 100
-                    },
+                        command.Parameters.AddWithValue("@AccountNo", accountNo);
+                        command.Parameters.AddWithValue("@Pin", Pin);
+                        command.Parameters.AddWithValue("@AccountType", accountType);
+                        using (SqlDataReader dataReader = await command.ExecuteReaderAsync())
+                        {
+                            while (await dataReader.ReadAsync())
+                            {
+                                account.Add(
+                                    new Account()
+                                    {
+                                        Id = (long)dataReader["Id"],
+                                        UserId = (long)dataReader["UserID"],
+                                        UserName = dataReader["UserName"].ToString(),
+                                        AccountNo = dataReader["AccountNo"].ToString(),
+                                        Balance = (decimal)dataReader["Balance"],
+                                        Pin = dataReader["Pin"].ToString(),
+                                        AccountType = (AccountType)dataReader["AccountType"],
+                                        CreatedDate = dataReader["CreatedDate"].ToString(),
+                                    }
+                                    );
+                            }
 
-                    new SqlParameter
-                    {
-                    ParameterName = "@AccountNo",
-                    Value = queryObject.AccountNo,
-                    SqlDbType = SqlDbType.VarChar,
-                    Direction = ParameterDirection.Input,
-                    Size = 50
-                    },
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
 
-                    new SqlParameter
-                    {
-                        ParameterName = "@AccountType",
-                        Value = queryObject.AccountType,
-                        SqlDbType = SqlDbType.VarChar,
-                        Size = 50
-                    },
-
-                    new SqlParameter
-                    {
-                        ParameterName = "@Balance",
-                        Value = queryObject.Balance,
-                        SqlDbType = SqlDbType.Decimal,
-                        Size = 43950335,
-                    },
-
-                    new SqlParameter
-                    {
-                    ParameterName = "@Pin",
-                    Value = queryObject.Pin,
-                    SqlDbType = SqlDbType.VarChar,
-                    Direction = ParameterDirection.Input,
-                    Size  = int.MaxValue
-                    },
-
-                    new SqlParameter
-                    {
-                    ParameterName = "@CreatedDate",
-                    Value =  queryObject.CreatedDate,
-                    SqlDbType = SqlDbType.VarChar,
-                    Direction = ParameterDirection.Input,
-                    Size = 100
-                    },
-                });
-
-                string Message = await sqlCommand.ExecuteNonQueryAsync() > 1 ? "Query executed successfully." : "Query was not successfull.";
-                Console.WriteLine(Message);
+                    Console.WriteLine(ex.Message);
+                }
+                return account;
             }
-        }
 
-        public static Account SelectAccountAsync(string accountNo, string Pin, string accountTpe)
-        {
+            public async Task<IEnumerable<Account>> SelectAccountAsync(string accountNo, string accountType)
+            {
 
-            return new Account();
+                SqlConnection sqlConn = _dbContext.OpenConnection();
+                string getUserQuery = $"USE Atm; SELECT Account.Id, Account.UserId, Account.Pin, Account.UserName, Account.AccountNo, Account.Balance, Account.CreatedDate FROM Account WHERE AccountNo = @AccountNo AND Pin = @Pin AND AccountType = @AccountType";
+                IList<Account> account = new List<Account>();
+                try
+                {
+                    using (SqlCommand command = new SqlCommand(getUserQuery, sqlConn))
+                    {
+                        command.Parameters.AddWithValue("@AccountNo", accountNo);
+                        command.Parameters.AddWithValue("@AccountType", accountType);
+                        using (SqlDataReader dataReader = await command.ExecuteReaderAsync())
+                        {
+                            while (await dataReader.ReadAsync())
+                            {
+                                account.Add(
+                                    new Account()
+                                    {
+                                        Id = (long)dataReader["Id"],
+                                        UserId = (long)dataReader["UserID"],
+                                        UserName = dataReader["UserName"].ToString(),
+                                        AccountNo = dataReader["AccountNo"].ToString(),
+                                        Balance = (decimal)dataReader["Balance"],
+                                        Pin = dataReader["Pin"].ToString(),
+                                        AccountType = (AccountType)dataReader["AccountType"],
+                                        CreatedDate = dataReader["CreatedDate"].ToString(),
+                                    }
+                                    );
+                            }
+
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+
+                    Console.WriteLine(ex.Message);
+                }
+                return account;
+            }
         }
     }
-}

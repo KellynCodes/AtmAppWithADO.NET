@@ -2,7 +2,6 @@
 using ATM.BLL.Utilities;
 using ATM.DAL.Database;
 using ATM.DAL.Database.DbQueries;
-using ATM.DAL.Database.QueryStrings;
 using ATM.DAL.Enums;
 using ATM.DAL.Models;
 using ATM.UI;
@@ -23,6 +22,7 @@ namespace ATM.BLL.Implementation
         private readonly IContinueOrEndProcess continueOrEndProcess = new ContinueOrEndProcess();
         private readonly ICreateAccount createAccount = new CreateAccount();
         public static readonly IMessage message = new Message();
+        private readonly DbQuery dbQuery = new DbQuery(new DbContext());
 
         public static int _days = 0;
         private const int Aday = 1;
@@ -69,7 +69,7 @@ namespace ATM.BLL.Implementation
                         message.Error("Input cannot be Empty. Do try again.");
                         goto EnterPin;
                     }
-                  var CheckAccountType = await DbQuery.SelectAccountAsync(AuthService.SessionUser.AccountNo, Pin, _accountType.ToString());
+                  var CheckAccountType = await dbQuery.SelectAccountAsync(AuthService.SessionUser.AccountNo, Pin, _accountType.ToString());
                    // var CheckAccountType = AtmDB.Account.Where(user => user.AccountNo == AuthService.SessionUser.AccountNo && user.AccountType == _accountType);
                     if (CheckAccountType.Any())
                     {
@@ -101,12 +101,12 @@ namespace ATM.BLL.Implementation
             }
         }
 
-        public void Withdraw()
+        public async Task Withdraw()
         {
             if (_days > OneWeek)
             {
-                message.Error("You have exceded your withdrawal limit. [20k: daily and 100k: weekly]");
-                authService.Login();
+                message.Error("You have exceeded your withdrawal limit. [20k: daily and 100k: weekly]");
+               await authService.Login();
             }
             message.Error("Note: Withdrawal Limit:\nDaily = 20k\nWeekly = 100k");
         CheckBalance: Console.WriteLine("1.\t Current\n2.\t Savings");
@@ -131,7 +131,7 @@ namespace ATM.BLL.Implementation
                         message.Error("Entered value was not in the list. Please try again");
                         goto CheckBalance;
                 }
-                var UserAccount = AtmDB.Account.Where(user => user.AccountNo == AuthService.SessionUser.AccountNo && user.AccountType == _accountType);
+                var UserAccount = await dbQuery.SelectAccountAsync(AuthService.SessionUser.AccountNo, _accountType.ToString());
             AmountToWidthDraw: if (UserAccount.Any())
                 {
                     Console.WriteLine("How much do you want to withdraw");
@@ -252,7 +252,7 @@ namespace ATM.BLL.Implementation
                 else
                 {
                     message.Error("Account not found. Check your account information to be certain you entered the correct account type\nOR contact customer care on 09157060998");
-                    authService.Login();
+                   await authService.Login();
                 }
             }
             else
@@ -471,7 +471,6 @@ namespace ATM.BLL.Implementation
 
         public async Task CreateAccount()
         {
-            long userID = AtmDB.Users.Last().Id + 1;
             string accountNumber = createAccount.AccountNumber();
             AccountType accountType = createAccount.GetAccountType();
             string email = createAccount.GetEmail();
@@ -502,7 +501,7 @@ namespace ATM.BLL.Implementation
             };
             var AccountData = new Account
             {
-                UserId = 3,
+                UserId = 2,
                 UserName = userName,
                 AccountNo = accountNumber,
                 AccountType = accountType,
@@ -512,11 +511,10 @@ namespace ATM.BLL.Implementation
             };
 
 
-            await DbQuery.AccountInsertAsync(AccountData);
-            await DbQuery.UserInsertAsync(UserData);
+            await dbQuery.CreateUserAndAccountAsync(AccountData, UserData);
             message.Success($"{userName} your account have been created successfully!.");
-            message.AlertInfo($"Your ID is {userID} and your account number is {accountNumber}");
-            message.AlertInfo($"Make sure you copy your account [{accountNumber}] and also memorize your user ID");
+            message.AlertInfo($"Your account number is {accountNumber}");
+            message.AlertInfo($"Make sure you copy your account [{accountNumber}].");
         }
 
         public void ReloadCash(decimal amount)
