@@ -2,8 +2,6 @@
 using ATM.BLL.Utilities;
 using ATM.DAL.Enums;
 using System;
-using System.Linq;
-
 namespace ATM.BLL.Implementation
 {
     public class CreateAccount : ICreateAccount
@@ -11,10 +9,12 @@ namespace ATM.BLL.Implementation
         private readonly IMessage message = new Message();
         private AccountType _accountType;
 
+        public CreateAccount() { }
+        public CreateAccount(AccountType accountType) => _accountType = accountType; 
         public string AccountNumber()
         {
             Random random = new Random();
-            int randomNumber = random.Next(0, 100000000);
+            int randomNumber =  random.Next(0, 100000000);
             const int SubNumber = 147;
             string IdentityNumber = SubNumber.ToString();
             string numberToString = randomNumber.ToString();

@@ -4,8 +4,8 @@ namespace ATM.DAL.Models
 {
     public class Account
     {
-        public long Id { get; set; }
-        public long UserId { get; set; }
+        public int Id { get; set; }
+        public int UserId { get; set; }
         public string UserName { get; set; }
         public string AccountNo { get; set; }
         public AccountType AccountType { get; set; }

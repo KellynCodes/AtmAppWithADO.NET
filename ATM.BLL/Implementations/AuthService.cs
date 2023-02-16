@@ -18,6 +18,7 @@ namespace ATM.BLL.Implementation
         static readonly IAtmService atmService = new AtmService();
         private readonly static Message message = new Message();
         private readonly DbQuery dbQuery = new DbQuery(new DbContext());
+        private readonly CreateAccount createAccount = new CreateAccount(new AccountType());
 
         /// <summary>
         /// Login Validation.
@@ -39,15 +40,17 @@ namespace ATM.BLL.Implementation
                 goto EnterPin;
             }
 
-        EnterAccountType: Console.WriteLine("Enter your account type.");
+       /* EnterAccountType: Console.WriteLine("Enter your account type.");
             string accountType = Console.ReadLine() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(accountType))
             {
                 message.Error("Input was empty of not valid. Please try agian");
                 goto EnterAccountType;
             }
+*/
+            //var ReturnedAccountType = createAccount.GetAccountType();
 
-            var UserDetails = await dbQuery.SelectAccountAsync(AccountNo, Pin, accountType);
+            var UserDetails = await dbQuery.SelectAccountAsync(AccountNo, Pin);
             if (UserDetails != null)
             {
                 foreach (var user in UserDetails)
@@ -74,13 +77,13 @@ namespace ATM.BLL.Implementation
                                await atmService.Withdraw();
                                 break;
                             case (int)SwitchCase.Three:
-                                atmService.Transfer();
+                              await atmService.Transfer();
                                 break;
                             case (int)SwitchCase.Four:
-                                atmService.Deposit();
+                               await atmService.Deposit();
                                 break;
                             case (int)SwitchCase.Five:
-                                atmService.PayBill();
+                               await atmService.PayBill();
                                 break;
                             default:
 
@@ -138,7 +141,7 @@ namespace ATM.BLL.Implementation
                 case (int)SwitchCase.Two:
                     message.Alert("You have canceled this operation.");
                     await Task.Delay(TwoHundredMilliseconds);
-                    continueOrEndProcess.Answer();
+                   await continueOrEndProcess.Answer();
                     break;
                 default:
                     message.Error("Entered input was not in the case. Please try again.");

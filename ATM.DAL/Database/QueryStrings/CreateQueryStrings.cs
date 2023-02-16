@@ -17,6 +17,7 @@
 	UserBank VARCHAR(50) NOT NULL,
     Role VARCHAR(50) NOT NULL
 	);";
+
         public static string AccountTableQueryString { get; } = @"USE Atm; CREATE TABLE Account(
 	Id INT IDENTITY(1,1) PRIMARY KEY NOT NULL,
 	UserId INT NOT NULL,
@@ -52,13 +53,13 @@
 	UserId INT NOT NULL,
 	Name VARCHAR(50) NOT NULL,
 	SwiftCode NVARCHAR(500) NOT NULL,
-	FOREIGN KEY (UserId) REFERENCES Users(UserId)
+	FOREIGN KEY (UserId) REFERENCES Users(Id)
 );";
+
         public static string BillTableQueryString { get; } = @"USE Atm; CREATE TABLE Bill(
 	Id INT IDENTITY(1,1) PRIMARY KEY NOT NULL,
 	Name VARCHAR(100) NOT NULL,
 	Amount DECIMAL NOT NULL,
 );";
-
     }
 }

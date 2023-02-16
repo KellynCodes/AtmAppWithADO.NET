@@ -1,9 +1,11 @@
-﻿namespace ATM.BLL.Interfaces
+﻿using System.Threading.Tasks;
+
+namespace ATM.BLL.Interfaces
 {
     public interface IBillPayment
     {
-        void Airtime();
-        void Nepa();
-        void CableTransmission();
+        Task Airtime();
+        Task Nepa();
+        Task CableTransmission();
     }
 }

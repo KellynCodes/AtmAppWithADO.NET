@@ -56,10 +56,10 @@ namespace ATM.BLL.Implementation
                           await ReloadCash();
                             break;
                         case (int)SwitchCase.Two:
-                            SetCashLimit();
+                           await SetCashLimit();
                             break;
                         case (int)SwitchCase.Three:
-                         ViewListOfUsers();
+                        await ViewListOfUsers();
                             break;
                         default:
                             message.Error("Entered value was not in the list");
@@ -75,7 +75,7 @@ namespace ATM.BLL.Implementation
         }
 
 
-        public void SetCashLimit()
+        public async Task SetCashLimit()
         {
             EnterCashLimit: message.AlertInfo($"Hi {SessionAdmin.FullName} How much do you want to set as cash limit?.");
             if (decimal.TryParse(Console.ReadLine(), out decimal cashLimit))
@@ -88,7 +88,7 @@ namespace ATM.BLL.Implementation
                 message.Error("Wrong input. Please enter only numbers.");
                 goto EnterCashLimit;
             }
-            continueOrEndProcess.Answer();
+            await continueOrEndProcess.Answer();
         }
 
         public async Task ReloadCash()
@@ -96,12 +96,11 @@ namespace ATM.BLL.Implementation
         EnterAmount: Console.WriteLine("Enter amount to reload");
             if (decimal.TryParse(Console.ReadLine(), out decimal amount))
             {
-                const int ThreeSeconds = 3000;
                 var atm = GetAtmData.GetData();
                 message.Success($"Reloading {amount}...");
                 atm.AvailableCash += amount;
                 message.Alert($"New Balance :: {atm.AvailableCash}");
-                MainMethod.GetUserChoice();
+               await MainMethod.GetUserChoice();
             }
             else
             {
@@ -110,13 +109,13 @@ namespace ATM.BLL.Implementation
             }
         }
 
-        public static void ViewListOfUsers()
+        public static async Task ViewListOfUsers()
         {
             foreach (var account in AtmDB.Account)
             {
                 Console.WriteLine($"{account.UserId} {account.UserName}");
             }
-            MainMethod.Logout();
+           await MainMethod.Logout();
         }
 
     }

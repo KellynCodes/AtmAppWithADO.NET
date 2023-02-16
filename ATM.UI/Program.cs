@@ -7,10 +7,10 @@ namespace ATM.UI
     internal class Program
     {
         private static readonly IAtmService atmService = new AtmService();
-      static void Main()
+        static async Task Main()
         {
-            atmService.Start();
-            MainMethod.GetUserChoice();
-        }   
+            await atmService.Start();
+            await MainMethod.GetUserChoice();
+        }
     }
 }

@@ -1,4 +1,5 @@
-﻿using ATM.BLL.Implementation;
+﻿using System.Threading.Tasks;
+using ATM.BLL.Implementation;
 using ATM.BLL.Interfaces;
 using System;
 using ATM.BLL.Utilities;
@@ -10,17 +11,17 @@ namespace ATM.UI
         private readonly IAuthService authService = new AuthService();
 
 
-        public void EndProcess()
+        public async Task EndProcess()
         {
             Console.WriteLine($"Collect your Card. Thank you for using {GetAtmData.GetData().Name}");
         }
 
-        public void ContinueProcess()
+        public async Task ContinueProcess()
         {
-            authService.Login();
+            await authService.Login();
         }
 
-        public void Answer()
+        public async Task Answer()
         {
              IMessage message = new Message();
         Console.WriteLine("Press enter to continue");
@@ -29,10 +30,10 @@ namespace ATM.UI
             string answer = Console.ReadLine() ?? string.Empty;
             if (answer.Trim().ToUpper() == "YES")
             {
-                EndProcess();
+                await EndProcess();
             }else if(answer.Trim().ToUpper() == "NO")
             {
-                MainMethod.GetUserChoice();
+               await MainMethod.GetUserChoice();
             }
             else
             {

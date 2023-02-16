@@ -6,14 +6,14 @@ namespace ATM.DAL.Models
     {
         public User() { }
 
-        protected User(long id, string password)
+        protected User(int id, string password)
         {
             Password = password;
             Id = id;
         }
 
 
-        public long Id { get; }
+        public int Id { get; }
         public string FullName { get; set; }
         public string Email { get; set; }
         public string Password { get; set; }

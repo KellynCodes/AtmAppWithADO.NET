@@ -2,6 +2,7 @@
 using ATM.BLL.Interfaces;
 using ATM.DAL.Enums;
 using System;
+using System.Threading.Tasks;
 
 namespace ATM.BLL.Utilities
 {
@@ -12,7 +13,7 @@ namespace ATM.BLL.Utilities
         private static readonly IAdminService _adminService = new AdminService();
         private static readonly IMessage message = new Message();
 
-        public static void GetUserChoice()
+        public static async Task GetUserChoice()
         {
         Option:
             Console.WriteLine("Choose from the Option");
@@ -23,25 +24,25 @@ namespace ATM.BLL.Utilities
                 switch (Choice)
                 {
                     case (int)SwitchCase.One:
-                        _adminService.LoginAdmin();
+                      await  _adminService.LoginAdmin();
                         break;
                     case (int)SwitchCase.Two:
                         Console.WriteLine("Please provide your details");
-                        authService.Login();
+                       await authService.Login();
                         break;
                     case (int)SwitchCase.Three:
-                        authService.ResetPin();
+                       await authService.ResetPin();
                         break;
                     case (int)SwitchCase.Four:
-                        atmService.CreateAccount();
+                       await atmService.CreateAccount();
                         break;
                     case (int)SwitchCase.Five:
-                        Logout();
+                      await Logout();
                         break;
                     default:
                         Console.Clear();
                         Console.WriteLine("Input is not in the option");
-                        GetUserChoice();
+                       await GetUserChoice();
                         break;
                 }
             }
@@ -52,7 +53,7 @@ namespace ATM.BLL.Utilities
                 goto Option;
             }
         }
-        public static void Logout()
+        public static async Task Logout()
         {
         Mbido: Console.WriteLine("Are you sure you want to Logout [NO/YES]");
             string Answer = Console.ReadLine() ?? string.Empty;
@@ -63,12 +64,12 @@ namespace ATM.BLL.Utilities
             }
             if (Answer.Trim().ToUpper() == "YES")
             {
-                authService.LogOut();
+               await authService.LogOut();
             }
             else if (Answer.Trim().ToUpper() == "NO")
             {
                 Console.Clear();
-                GetUserChoice();
+                await GetUserChoice();
             }
             else
             {

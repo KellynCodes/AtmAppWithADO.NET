@@ -21,7 +21,7 @@ namespace ATM.DAL.Database.Implementation
         public async Task CreateUser(User user)
         {
 
-            SqlConnection sqlConn = _dbContext.OpenConnection();
+            SqlConnection sqlConn = await _dbContext.OpenConnection();
 
 
             string insertQuery =
@@ -80,7 +80,7 @@ namespace ATM.DAL.Database.Implementation
         public async Task<long> UpdateUser(int userId, User user)
         {
 
-            SqlConnection sqlConn = _dbContext.OpenConnection();
+            SqlConnection sqlConn = await _dbContext.OpenConnection();
 
 
 
@@ -135,9 +135,9 @@ namespace ATM.DAL.Database.Implementation
             }
         }
 
-        public void DeleteUser(int UserId)
+        public async Task DeleteUser(int UserId)
         {
-            SqlConnection sqlConn = _dbContext.OpenConnection();
+            SqlConnection sqlConn = await _dbContext.OpenConnection();
 
             string deleteQuery = $"DELETE FROM Users WHERE UserId = @UserId ";
             using (SqlCommand command = new SqlCommand(deleteQuery, sqlConn))
@@ -160,9 +160,9 @@ namespace ATM.DAL.Database.Implementation
             }
         }
 
-        public User GetUser(int id)
+        public async Task<User> GetUser(int id)
         {
-            SqlConnection sqlConn = _dbContext.OpenConnection();
+            SqlConnection sqlConn = await _dbContext.OpenConnection();
             string getUserQuery = $"SELECT Users.FirstName, Users.LastName, Users.UserName, Users.PhoneNumber, Users.ProfilePicure, Users.Country FROM Users WHERE UserId = @UserId ";
             using (SqlCommand command = new SqlCommand(getUserQuery, sqlConn))
             {
@@ -195,7 +195,7 @@ namespace ATM.DAL.Database.Implementation
         public async Task<IEnumerable<User>> GetUsers()
         {
 
-            SqlConnection sqlConn = _dbContext.OpenConnection();
+            SqlConnection sqlConn = await _dbContext.OpenConnection();
             string getAllUsersQuery = $"SELECT Users.FirstName, Users.LastName, Users.UserName, Users.PhoneNumber, Users.ProfilePicure, Users.Country FROM Users WHERE UserId = @UserId ";
             using (SqlCommand command = new SqlCommand(getAllUsersQuery, sqlConn))
             {

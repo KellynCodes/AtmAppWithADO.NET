@@ -7,6 +7,6 @@ namespace ATM.BLL.Interfaces
     {
        Task LoginAdmin();
        Task ReloadCash();
-       void SetCashLimit();
+       Task SetCashLimit();
     }
 }

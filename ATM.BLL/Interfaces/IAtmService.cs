@@ -7,11 +7,11 @@ namespace ATM.BLL.Interfaces
         Task Start();
         Task CheckBalance();
         Task Withdraw();
-        void Transfer();
-        void Deposit();
-        void PayBill();
+        Task Transfer();
+        Task Deposit();
+        Task PayBill();
         Task CreateAccount();
-        void ReloadCash(decimal amount);
+        Task ReloadCash();
 
     }
 

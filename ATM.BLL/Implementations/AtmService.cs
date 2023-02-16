@@ -69,7 +69,7 @@ namespace ATM.BLL.Implementation
                         message.Error("Input cannot be Empty. Do try again.");
                         goto EnterPin;
                     }
-                  var CheckAccountType = await dbQuery.SelectAccountAsync(AuthService.SessionUser.AccountNo, Pin, _accountType.ToString());
+                  var CheckAccountType = await dbQuery.SelectAccountAsync(AuthService.SessionUser.AccountNo, Pin);
                    // var CheckAccountType = AtmDB.Account.Where(user => user.AccountNo == AuthService.SessionUser.AccountNo && user.AccountType == _accountType);
                     if (CheckAccountType.Any())
                     {
@@ -79,7 +79,7 @@ namespace ATM.BLL.Implementation
                             message.Success($"{user.UserName} your account balance is {user.Balance}");
                         }
 
-                        continueOrEndProcess.Answer();
+                        await continueOrEndProcess.Answer();
                     }
                     else
                     {
@@ -131,9 +131,8 @@ namespace ATM.BLL.Implementation
                         message.Error("Entered value was not in the list. Please try again");
                         goto CheckBalance;
                 }
-                var UserAccount = await dbQuery.SelectAccountAsync(AuthService.SessionUser.AccountNo, _accountType.ToString());
-            AmountToWidthDraw: if (UserAccount.Any())
-                {
+             
+            AmountToWidthDraw:
                     Console.WriteLine("How much do you want to withdraw");
                     Console.WriteLine("1. 500\t2. 1000\t3. 2000\n4. 5000\t5. 10000\t6. 20000\n7. Others");
                     if (int.TryParse(Console.ReadLine(), out int choice))
@@ -230,30 +229,20 @@ namespace ATM.BLL.Implementation
                         goto EnterDenomination;
                     }
                 nextBlock:
-                    foreach (var user in UserAccount)
-                    {
-                        if (Amount >= user.Balance)
+                        if (Amount >= AuthService.SessionUser.Balance)
                         {
                             message.Error("Insufficient balance");
                             goto AmountToWidthDraw;
                         }
                         else
                         {
-                            user.Balance -= Amount;
+                           AuthService.SessionUser.Balance -= Amount;
                             GetAtmData.GetData().AvailableCash -= Amount;
-                            message.Success($"Transaction successfull!. {Amount} have been debited from your account.  Your new account balance is {user.Balance}");
+                            message.Success($"Transaction successfull!. {Amount} have been debited from your account.  Your new account balance is {AuthService.SessionUser.Balance}");
                             message.AlertInfo($"Cash denominations: {_cashDenomination}");
                         }
-                    }
+                   await continueOrEndProcess.Answer();
 
-                    continueOrEndProcess.Answer();
-
-                }
-                else
-                {
-                    message.Error("Account not found. Check your account information to be certain you entered the correct account type\nOR contact customer care on 09157060998");
-                   await authService.Login();
-                }
             }
             else
             {
@@ -266,7 +255,7 @@ namespace ATM.BLL.Implementation
         /// Method that handles transfer of money
         /// </summary>
 
-        public void Transfer()
+        public async Task Transfer()
         {
         EnterAmount: Console.WriteLine("Enter amount");
             if (decimal.TryParse(Console.ReadLine(), out decimal amount))
@@ -353,11 +342,11 @@ namespace ATM.BLL.Implementation
                         if (userInput.Trim().ToUpper() == "YES")
                         {
                             message.Success($"Transaction successfull!. {AuthService.SessionUser.UserName} {amount} has been debited from your account. You just transfered {amount} to {Recepient.UserName} on {DateTime.Now.ToLongDateString()}\n Your new balance is {newBalance}");
-                            continueOrEndProcess.Answer();
+                            await continueOrEndProcess.Answer();
                         }
                         else if (userInput.Trim().ToUpper() == "NO")
                         {
-                            continueOrEndProcess.Answer();
+                            await continueOrEndProcess.Answer();
                         }
                         else
                         {
@@ -368,7 +357,7 @@ namespace ATM.BLL.Implementation
                     else if (answer.Trim().ToUpper() == "NO")
                     {
                         message.Error("Transaction Canceled");
-                        authService.LogOut();
+                       await authService.LogOut();
                     }
                     else
                     {
@@ -394,7 +383,7 @@ namespace ATM.BLL.Implementation
         /// Method that handles money deposit.
         /// </summary>
 
-        public void Deposit()
+        public async Task Deposit()
         {
         EnterAccountumber: message.Alert("Enter your account number.");
             string accNo = Console.ReadLine() ?? string.Empty;
@@ -441,10 +430,10 @@ namespace ATM.BLL.Implementation
 
             decimal newBalance = AuthService.SessionUser.Balance += amount;
             message.Success($"{AuthService.SessionUser.UserName} your just deposited {amount} to your account {accNo}. Your new balance is {newBalance}");
-            continueOrEndProcess.Answer();
+           await continueOrEndProcess.Answer();
         }
 
-        public void PayBill()
+        public async Task PayBill()
         {
             IBillPayment billPayment = new BillPayment();
         EnterBillToPay: message.Alert("Which bill do you want to pay.");
@@ -454,13 +443,13 @@ namespace ATM.BLL.Implementation
                 switch (answer)
                 {
                     case (int)SwitchCase.One:
-                        billPayment.Airtime();
+                       await billPayment.Airtime();
                         break;
                     case (int)SwitchCase.Two:
-                        billPayment.CableTransmission();
+                      await  billPayment.CableTransmission();
                         break;
                     case (int)SwitchCase.Three:
-                        billPayment.Nepa();
+                      await  billPayment.Nepa();
                         break;
                     default:
                         message.Error("Entered input was not in the option.");
@@ -498,10 +487,11 @@ namespace ATM.BLL.Implementation
                 Email = email,
                 Password = userPassword,
                 PhoneNumber = phoneNumber,
+                UserBank = "Gt Bank",
             };
             var AccountData = new Account
             {
-                UserId = 2,
+                UserId = 6,
                 UserName = userName,
                 AccountNo = accountNumber,
                 AccountType = accountType,
@@ -517,9 +507,9 @@ namespace ATM.BLL.Implementation
             message.AlertInfo($"Make sure you copy your account [{accountNumber}].");
         }
 
-        public void ReloadCash(decimal amount)
+        public async Task ReloadCash()
         {
-            _adminService.ReloadCash();
+           await _adminService.ReloadCash();
         }
     }
 }

@@ -19,7 +19,7 @@ namespace ATM.BLL.Implementation
 
        public async Task CreateDB(string dataBase, string SqlQuery)
         {
-            SqlConnection DbConnection = _dbContext.OpenConnection();
+            SqlConnection DbConnection = await _dbContext.OpenConnection();
 
             using (SqlCommand command = new SqlCommand(SqlQuery, DbConnection))
             {
@@ -32,36 +32,36 @@ namespace ATM.BLL.Implementation
 
        public async Task CreateTableAsync(string table, string SqlQuery)
         {
-            SqlConnection DbConnection =  _dbContext.OpenConnection();
+            SqlConnection DbConnection = await _dbContext.OpenConnection();
 
             using (SqlCommand command = new SqlCommand(SqlQuery, DbConnection))
             {
-                int Result = command.ExecuteNonQuery();
+                int Result = await command.ExecuteNonQueryAsync();
                 string Message = $"{table} created successfully.";
                 QueryResult.Result(Message);
             }
 
         }
 
-        public async Task DeleteDB(string dataBase, string SqlQuery)
+        public async Task DeleteDbAsync(string dataBase, string SqlQuery)
         {
-            SqlConnection DbConnection =  _dbContext.OpenConnection();
+            SqlConnection DbConnection = await _dbContext.OpenConnection();
 
             using (SqlCommand command = new SqlCommand(SqlQuery, DbConnection))
             {
-                int Result = command.ExecuteNonQuery();
+                int Result = await command.ExecuteNonQueryAsync();
                 string Message = $"{dataBase} created successfully.";
                 QueryResult.Result(Message);
             }
         }
 
-       public async Task DeleteTable(string table, string SqlQuery)
+       public async Task DeleteTableAsync(string table, string SqlQuery)
         {
-            SqlConnection DbConnection =  _dbContext.OpenConnection();
+            SqlConnection DbConnection = await _dbContext.OpenConnection();
 
             using (SqlCommand command = new SqlCommand(SqlQuery, DbConnection))
             {
-                int Result = command.ExecuteNonQuery();
+                int Result = await command.ExecuteNonQueryAsync();
                 string Message = $"{table} deleted successfully.";
                 QueryResult.Result(Message);
             }

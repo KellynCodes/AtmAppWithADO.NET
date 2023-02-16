@@ -1,6 +1,7 @@
 ﻿using Microsoft.Data.SqlClient;
 using System;
 using System.Data;
+using System.Threading.Tasks;
 
 namespace ATM.DAL.Database
 {
@@ -22,10 +23,10 @@ namespace ATM.DAL.Database
             _connString = connString;
         }
 
-        public SqlConnection OpenConnection()
+        public async Task<SqlConnection> OpenConnection()
         {
             _dbConnection = new SqlConnection(_connString);
-             _dbConnection.Open();
+            await _dbConnection.OpenAsync();
             return _dbConnection;
         }
 

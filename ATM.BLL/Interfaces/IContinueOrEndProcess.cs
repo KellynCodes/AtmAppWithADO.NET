@@ -1,9 +1,11 @@
-﻿namespace ATM.BLL.Interfaces
+﻿using System.Threading.Tasks;
+
+namespace ATM.BLL.Interfaces
 {
     public interface IContinueOrEndProcess
     {
-        void EndProcess();
-        void ContinueProcess();
-        void Answer();
+        Task EndProcess();
+        Task ContinueProcess();
+        Task Answer();
     }
 }
