@@ -236,9 +236,13 @@ namespace ATM.BLL.Implementation
                         }
                         else
                         {
-                           AuthService.SessionUser.Balance -= Amount;
+                    await dbQuery.UpdateAccountAsync(AuthService.SessionUser.UserId, Amount);
                             GetAtmData.GetData().AvailableCash -= Amount;
-                            message.Success($"Transaction successfull!. {Amount} have been debited from your account.  Your new account balance is {AuthService.SessionUser.Balance}");
+                   var UserAccount = await dbQuery.SelectAccountAsync(AuthService.SessionUser.AccountNo);
+                            foreach(var account in UserAccount)
+                    {
+                        message.Success($"Transaction successfull!. {Amount} have been debited from your account.  Your new account balance is {account.Balance}");
+                    }
                             message.AlertInfo($"Cash denominations: {_cashDenomination}");
                         }
                    await continueOrEndProcess.Answer();
@@ -294,7 +298,8 @@ namespace ATM.BLL.Implementation
                 message.Error("Input was empty or not valid");
                 goto EnterAccountNumber;
             }
-            var Recepient = AtmDB.Account.FirstOrDefault(user => user.AccountNo == accountNumber);
+          var FetchedAccount = await dbQuery.SelectAccountAsync(accountNumber);
+            var Recepient = FetchedAccount.FirstOrDefault(user => user.AccountNo == accountNumber);
             if (Recepient == null)
             {
                 message.Error("This account number does not exist. Enter a valid information");
@@ -328,8 +333,13 @@ namespace ATM.BLL.Implementation
                     if (answer.Trim().ToUpper() == "YES")
                     {
 
-                        var newBalance = AuthService.SessionUser.Balance -= amount;
-                        Recepient.Balance += amount;
+                        var SenderAccount = await dbQuery.SelectAccountAsync(AuthService.SessionUser.AccountNo);
+                        var Sender = SenderAccount.FirstOrDefault(user => user.AccountNo == AuthService.SessionUser.AccountNo);
+                        var SenderAmount = Sender.Balance -= amount;
+
+                       await dbQuery.UpdateAccountAsync(AuthService.SessionUser.UserId, SenderAmount);
+                        await dbQuery.UpdateAccountAsync(Recepient.UserId, amount);
+
                         message.Success($"Transaction successfull!.");
                     DoYouWantReceipt: Console.WriteLine("Do you need receipt[YES/NO]");
                         string userInput = Console.ReadLine() ?? string.Empty;
@@ -341,7 +351,7 @@ namespace ATM.BLL.Implementation
                         }
                         if (userInput.Trim().ToUpper() == "YES")
                         {
-                            message.Success($"Transaction successfull!. {AuthService.SessionUser.UserName} {amount} has been debited from your account. You just transfered {amount} to {Recepient.UserName} on {DateTime.Now.ToLongDateString()}\n Your new balance is {newBalance}");
+                            message.Success($"Transaction successfull!. {AuthService.SessionUser.UserName} {amount} has been debited from your account. You just transfered {amount} to {Recepient.UserName} on {DateTime.Now.ToLongDateString()}\n Your new balance is {Sender.Balance}");
                             await continueOrEndProcess.Answer();
                         }
                         else if (userInput.Trim().ToUpper() == "NO")
@@ -385,36 +395,6 @@ namespace ATM.BLL.Implementation
 
         public async Task Deposit()
         {
-        EnterAccountumber: message.Alert("Enter your account number.");
-            string accNo = Console.ReadLine() ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(accNo))
-            {
-                message.Error("Empty input. Please try again.");
-                goto EnterAccountumber;
-            }
-
-        //Get account type
-        ChooseAccountType: message.Alert("Choose your account type.");
-            Console.WriteLine("1.\t Current\n2.\t Savings");
-
-            if (!int.TryParse(Console.ReadLine(), out int answer))
-            {
-                message.Error("Invalid input. Please enter only numbers.");
-                goto ChooseAccountType;
-            }
-            switch (answer)
-            {
-                case (int)SwitchCase.One:
-                    _accountType = AccountType.Current;
-                    break;
-                case (int)SwitchCase.Two:
-                    _accountType = AccountType.Savings;
-                    break;
-                default:
-                    message.Error("Entered value was not in the list. Please try again");
-                    goto ChooseAccountType;
-            }
-
         //Get amount to deposit;
         EnterAmount: message.Alert("Enter amount you want to deposit");
             if (!decimal.TryParse(Console.ReadLine(), out decimal amount))
@@ -428,9 +408,16 @@ namespace ATM.BLL.Implementation
                 goto EnterAmount;
             }
 
-            decimal newBalance = AuthService.SessionUser.Balance += amount;
-            message.Success($"{AuthService.SessionUser.UserName} your just deposited {amount} to your account {accNo}. Your new balance is {newBalance}");
-           await continueOrEndProcess.Answer();
+            await dbQuery.UpdateAccountAsync(AuthService.SessionUser.UserId, amount);
+            GetAtmData.GetData().AvailableCash -= amount;
+            var UserAccount = await dbQuery.SelectAccountAsync(AuthService.SessionUser.AccountNo);
+            foreach (var account in UserAccount)
+            {
+                message.AlertInfo($"{account.UserName} your just deposited {amount} to your account {account.AccountNo}. Your new balance is {account.Balance}");
+
+            }
+
+            await continueOrEndProcess.Answer();
         }
 
         public async Task PayBill()
@@ -491,7 +478,7 @@ namespace ATM.BLL.Implementation
             };
             var AccountData = new Account
             {
-                UserId = 6,
+                UserId = 7,
                 UserName = userName,
                 AccountNo = accountNumber,
                 AccountType = accountType,

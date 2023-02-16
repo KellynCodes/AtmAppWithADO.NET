@@ -2,6 +2,7 @@
 using ATM.DAL.Models;
 using Microsoft.Data.SqlClient;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -58,48 +59,6 @@ INSERT INTO Account(UserId, UserName, AccountNo, AccountType, Balance, Pin, Crea
             }
         }
 
-        public async Task<IEnumerable<Account>> SelectAccountAsync(string accountNo, string Pin, AccountType accountType)
-        {
-
-            SqlConnection sqlConn = await _dbContext.OpenConnection();
-            string getUserQuery = $"USE Atm; SELECT Account.Id, Account.UserId, Account.Pin, Account.UserName, Account.AccountNo, Account.Balance, Account.CreatedDate FROM Account WHERE AccountNo = @AccountNo AND Pin = @Pin AND AccountType = @AccountType";
-            IList<Account> account = new List<Account>();
-            try
-            {
-                using (SqlCommand command = new SqlCommand(getUserQuery, sqlConn))
-                {
-                    command.Parameters.AddWithValue("@AccountNo", accountNo);
-                    command.Parameters.AddWithValue("@Pin", Pin);
-                    command.Parameters.AddWithValue("@AccountType", accountType);
-                    using (SqlDataReader dataReader = await command.ExecuteReaderAsync())
-                    {
-                        while (await dataReader.ReadAsync())
-                        {
-                            account.Add(
-                                new Account()
-                                {
-                                    Id = (int)dataReader["Id"],
-                                    UserId = (int)dataReader["UserID"],
-                                    UserName = dataReader["UserName"].ToString(),
-                                    AccountNo = dataReader["AccountNo"].ToString(),
-                                    Balance = (decimal)dataReader["Balance"],
-                                    Pin = dataReader["Pin"].ToString(),
-                                    AccountType = (AccountType)dataReader["AccountType"],
-                                    CreatedDate = dataReader["CreatedDate"].ToString(),
-                                }
-                                );
-                        }
-
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-
-                throw ex;
-            }
-            return account;
-        }
 
         public async Task<IEnumerable<Account>> SelectAccountAsync(string accountNo, string Pin)
         {
@@ -109,28 +68,24 @@ INSERT INTO Account(UserId, UserName, AccountNo, AccountType, Balance, Pin, Crea
             IList<Account> account = new List<Account>();
             try
             {
-                using (SqlCommand command = new SqlCommand(getUserQuery, sqlConn))
+                using SqlCommand command = new SqlCommand(getUserQuery, sqlConn);
+                command.Parameters.AddWithValue("@AccountNo", accountNo);
+                command.Parameters.AddWithValue("@Pin", Pin);
+                using SqlDataReader dataReader = await command.ExecuteReaderAsync();
+                while (await dataReader.ReadAsync())
                 {
-                    command.Parameters.AddWithValue("@AccountNo", accountNo);
-                    command.Parameters.AddWithValue("@Pin", Pin);
-                    using (SqlDataReader dataReader = await command.ExecuteReaderAsync())
-                    {
-                        while (await dataReader.ReadAsync())
+                    account.Add(
+                        new Account()
                         {
-                            account.Add(
-                                new Account()
-                                {
-                                    Id = (int)dataReader["Id"],
-                                    UserId = (int)dataReader["UserID"],
-                                    UserName = dataReader["UserName"].ToString(),
-                                    AccountNo = dataReader["AccountNo"].ToString(),
-                                    Balance = (decimal)dataReader["Balance"],
-                                    Pin = dataReader["Pin"].ToString(),
-                                    CreatedDate = dataReader["CreatedDate"].ToString(),
-                                }
-                                ); ;
+                            Id = (int)dataReader["Id"],
+                            UserId = (int)dataReader["UserID"],
+                            UserName = dataReader["UserName"].ToString(),
+                            AccountNo = dataReader["AccountNo"].ToString(),
+                            Balance = (decimal)dataReader["Balance"],
+                            Pin = dataReader["Pin"].ToString(),
+                            CreatedDate = dataReader["CreatedDate"].ToString(),
                         }
-                    }
+                        ); ;
                 }
             }
             catch (Exception ex)
@@ -171,6 +126,28 @@ INSERT INTO Account(UserId, UserName, AccountNo, AccountType, Balance, Pin, Crea
                 throw ex;
             }
             return account;
+        }
+
+        public async Task UpdateAccountAsync(int userId, decimal balance)
+        {
+
+            string UserQuery = @"USE ATM; UPDATE Account SET Balance = @Balance WHERE UserId = @UserId";
+            SqlConnection sqlConnection = await _dbContext.OpenConnection();
+
+            try
+            {
+
+                SqlCommand UserSqlCommand = new SqlCommand(UserQuery, sqlConnection);
+                UserSqlCommand.Parameters.AddWithValue("@UserId", userId);
+                UserSqlCommand.Parameters.AddWithValue("@Balance", balance);
+
+                string UserMessage = await UserSqlCommand.ExecuteNonQueryAsync() > 1 ? "Update Query executed successfully." : "Update Query was not successfull.";
+                Console.WriteLine(UserMessage);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
         }
     }
 }
