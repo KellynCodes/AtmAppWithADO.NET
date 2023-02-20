@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace ATM.BLL.Interface
 {
-    public interface ICreateDatabase : IDisposable
+    public interface ICreate : IDisposable
     {
         Task CreateDB(string dataBase, string SqlQuery);
         Task DeleteDbAsync(string dataBase, string SqlQuery);

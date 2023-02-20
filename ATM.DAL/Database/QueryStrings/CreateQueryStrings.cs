@@ -3,9 +3,11 @@
     public class CreateQueryStrings
     {
         public static string AtmDbQueryString { get; } = @"CREATE DATABASE Atm;";
-        public static string AtmTableQueryString { get; } = @"CREATE TABLE Atm(
+        public static string AtmTableQueryString { get; } = @"USE Atm; CREATE TABLE AtmInfo(
+	Id INT IDENTITY(1,1) PRIMARY KEY NOT NULL,
 	Name VARCHAR(60) NOT NULL,
 	AvailableCash DECIMAL NOT NULL,
+	Language VARCHAR(100) NOT NULL
 );";
 
         public static string UserTableQueryString { get; } = @"USE Atm; CREATE TABLE Users (

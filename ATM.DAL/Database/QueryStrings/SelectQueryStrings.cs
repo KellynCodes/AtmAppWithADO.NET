@@ -2,6 +2,8 @@
 {
     public class SelectQueryStrings
     {
-        public static string SelectFromUsersTable { get; } = @"USE Atm; SELECT Users.Id from Users where Users.Password = 12345;";
+        public static string GetUserQuery {get; set;} = $"USE Atm; SELECT Users.FullName, Users.Email, Users.Password, Users.UserBank, Users.PhoneNumber FROM Users WHERE Email = @Email AND Password = @Password";
+
+        public static string GetAdminQuery { get; set; } = $"USE Atm; SELECT Users.FullName, Users.Email, Users.Password, Users.UserBank, Users.PhoneNumber FROM Users WHERE Email = @Email AND Password = @Password AND Role = 'Admin'";
     }
 }

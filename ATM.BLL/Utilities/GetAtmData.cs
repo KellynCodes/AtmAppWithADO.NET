@@ -1,18 +1,28 @@
-﻿using ATM.DAL.Models;
+﻿using ATM.DAL.Database.DbQueries;
+using ATM.DAL.Database;
+using ATM.DAL.Models;
+using System;
+using System.Threading.Tasks;
 
 namespace ATM.BLL.Utilities
 {
     public class GetAtmData
     {
-        public static Atm _info;
-
-        public static Atm GetData()
+        public static Atm GetData { get; private set; }
+        public static async Task<Atm> Data()
         {
-            foreach (var info in Atm.Data)
+        Atm _atm = new Atm();
+            DbQuery dbQuery = new DbQuery(new DbContext());
+            var AtmInfo = await dbQuery.SelectAtmDataInfoAsync(ReturnAtmId.Id());
+            if (AtmInfo != null)
             {
-                _info = info;
+                foreach (var Info in AtmInfo)
+                {
+                    _atm = Info;
+                    GetData = Info;
+                }
             }
-            return _info;
+            return _atm;
         }
     }
 }

@@ -11,9 +11,9 @@ namespace ATM.UI
         private readonly IAuthService authService = new AuthService();
 
 
-        public async Task EndProcess()
+        public void EndProcess()
         {
-            Console.WriteLine($"Collect your Card. Thank you for using {GetAtmData.GetData().Name}");
+            Console.WriteLine($"Collect your Card. Thank you for using {GetAtmData.GetData.Name}");
         }
 
         public async Task ContinueProcess()
@@ -30,7 +30,7 @@ namespace ATM.UI
             string answer = Console.ReadLine() ?? string.Empty;
             if (answer.Trim().ToUpper() == "YES")
             {
-                await EndProcess();
+                 EndProcess();
             }else if(answer.Trim().ToUpper() == "NO")
             {
                await MainMethod.GetUserChoice();
