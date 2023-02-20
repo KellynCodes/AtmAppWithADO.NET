@@ -13,8 +13,9 @@ namespace ATM.BLL.Implementation
 {
     public class AtmService : IAtmService
     {
+        public static AccountType _accountType;
+
         private readonly IAdminService _adminService;
-        private static AccountType _accountType;
         private static int _cashDenomination;
         private static decimal ChoiceAmount;
 
@@ -25,6 +26,7 @@ namespace ATM.BLL.Implementation
         private readonly DbQuery dbQuery = new DbQuery(new DbContext());
 
         public static int _days = 0;
+
         private const int Aday = 1;
         private const int OneWeek = 7;
 
@@ -35,6 +37,16 @@ namespace ATM.BLL.Implementation
         public AtmService() { }
         public async Task Start()
         {
+            try
+            {
+                await CreatDb.Run(dbName: "AtmDb");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Database Already exist: See System error");
+                goto Continue;
+            }
+        Continue:
             var AtmInfo = await dbQuery.SelectAtmDataInfoAsync();
             if (AtmInfo != null)
             {
@@ -46,10 +58,15 @@ namespace ATM.BLL.Implementation
             }
 
                 var AtmData = await GetAtmData.Data();
-            if (AtmData != null)
+            if (AtmData != null && AtmData.Id != 0)
             {
                 Console.WriteLine($"{AtmData.Name} has booted!");
                 Console.WriteLine("Insert Card!");
+            }
+            else
+            {
+                message.Error("Atm does not exist.");
+                await Start();
             }
         }
 
@@ -95,7 +112,7 @@ namespace ATM.BLL.Implementation
                     else
                     {
                         message.Error("Account not found. Check your account information to be certain you entered the correct account type and pin\nOR contact customer care on 09157060998");
-                        await authService.Login();
+                        await authService.Login(); 
                     }
                 }
                 else
@@ -329,21 +346,10 @@ namespace ATM.BLL.Implementation
             {
                 string userBank = DefaultSwitchCaseMethod.SwitchCase(bank);
 
-                var accountInformation = AtmDB.Account.FirstOrDefault(user => user.Id == AuthService.SessionUser.Id);
-                if (accountInformation == null)
-                {
-                    message.Error("Error occured. Please make sure the informations you provided are valid.");
-                    goto EnterAmount;
-                }
-                long userID = accountInformation.UserId;
-
-                if (AuthService.SessionUser.Id == userID)
-                {
                 question: Console.WriteLine($"Do you want to transfer {amount} to {Recepient?.UserName}");
                     string answer = Console.ReadLine() ?? string.Empty;
                     if (answer.Trim().ToUpper() == "YES")
                     {
-
                         var SenderAccount = await dbQuery.SelectAccountAsync(AuthService.SessionUser.AccountNo);
                         var Sender = SenderAccount.FirstOrDefault(user => user.AccountNo == AuthService.SessionUser.AccountNo);
                         var SenderAmount = Sender.Balance -= amount;
@@ -385,12 +391,6 @@ namespace ATM.BLL.Implementation
                         message.Error("Please enter [NO/YES] for us to be sure you don't want to continue with the transaction.");
                         goto question;
                     }
-                }
-                else
-                {
-                    message.Error("Error occured. Please make sure the informations you provided are valid.");
-                    goto EnterAmount;
-                }
             }
             else
             {

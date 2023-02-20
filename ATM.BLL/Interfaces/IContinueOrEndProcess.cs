@@ -4,7 +4,7 @@ namespace ATM.BLL.Interfaces
 {
     public interface IContinueOrEndProcess
     {
-        void EndProcess();
+        Task EndProcess();
         Task ContinueProcess();
         Task Answer();
     }

@@ -5,18 +5,20 @@ using ATM.DAL.Database;
 using System;
 
 using static ATM.DAL.Database.QueryStrings.CreateQueryStrings;
-
+using ATM.BLL.Interfaces;
 namespace ATM.BLL.Utilities
 {
     public class CreatDb
     {
         private readonly static ICreate create = new Create(new DbContext());
-        public static async Task<string> Run()
+        private readonly static IAdminService adminService = new AdminService();
+
+        public static async Task<string> Run(string dbName)
         {
             try
             {
 
-                await create.CreateDB("Atm", AtmDbQueryString);
+                await create.CreateDB(dbName, AtmDbQueryString);
 
                 await create.CreateTableAsync("AtmInfo", AtmTableQueryString);
                 await create.CreateTableAsync("Users", UserTableQueryString);
@@ -26,14 +28,16 @@ namespace ATM.BLL.Utilities
                 await create.CreateTableAsync("ThirdParty", ThirdPartyQueryString);
                 await create.CreateTableAsync("Bank", BankTableQueryString);
                 await create.CreateTableAsync("Bill", BillTableQueryString);
-                return "Query was successfull";
+
+                await CreateNewAdminUserAuthomatically.NewUser();
             }
             catch (Exception exceptionMessage)
             {
 
                 Console.WriteLine(exceptionMessage);
-                throw exceptionMessage;
+                await adminService.LoginAdmin();
             }
+                return "Query was successfull";
         }
     }
 }

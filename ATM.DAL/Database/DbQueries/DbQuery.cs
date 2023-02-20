@@ -16,9 +16,9 @@ namespace ATM.DAL.Database.DbQueries
         }
         public async Task CreateUserAndAccountAsync(Account account, User user)
         {
-            string AccountQuery = @"USE Atm; 
+            string AccountQuery = @"USE Atmm; 
 INSERT INTO Account(UserId, UserName, AccountNo, AccountType, Balance, Pin, CreatedDate) VALUES(@UserId, @UserName, @AccountNo, @AccountType, @Balance, @Pin, @CreatedDate)";
-            string UserQuery = @"USE Atm;
+            string UserQuery = @"USE Atmm;
 	INSERT INTO Users(FullName, Email, Password, PhoneNumber, UserBank, Role) VALUES(@FullName, @Email, @Password, @PhoneNumber, @UserBank, @Role)";
             SqlConnection sqlConnection = await _dbContext.OpenConnection();
             SqlTransaction transaction = sqlConnection.BeginTransaction();
@@ -352,6 +352,29 @@ INSERT INTO Account(UserId, UserName, AccountNo, AccountType, Balance, Pin, Crea
                 SqlCommand UserSqlCommand = new SqlCommand(UserQuery, sqlConnection);
                 UserSqlCommand.Parameters.AddWithValue("@UserId", userId);
                 UserSqlCommand.Parameters.AddWithValue("@Balance", balance);
+
+                string UserMessage = await UserSqlCommand.ExecuteNonQueryAsync() > 1 ? "Update Query executed successfully." : "Update Query was not successfull.";
+                Console.WriteLine(UserMessage);
+                await sqlConnection.CloseAsync();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        
+        public async Task UpdateAccountAsync(int userId, string pin)
+        {
+
+            string UserQuery = @"USE ATM; UPDATE Account SET Pin = @Pin WHERE UserId = @UserId";
+            SqlConnection sqlConnection = await _dbContext.OpenConnection();
+
+            try
+            {
+
+                SqlCommand UserSqlCommand = new SqlCommand(UserQuery, sqlConnection);
+                UserSqlCommand.Parameters.AddWithValue("@UserId", userId);
+                UserSqlCommand.Parameters.AddWithValue("@Pin", pin);
 
                 string UserMessage = await UserSqlCommand.ExecuteNonQueryAsync() > 1 ? "Update Query executed successfully." : "Update Query was not successfull.";
                 Console.WriteLine(UserMessage);

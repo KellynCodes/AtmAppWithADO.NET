@@ -12,8 +12,11 @@ namespace ATM.DAL.Database
         private bool _disposed;
 
         private SqlConnection _dbConnection = null;
-
-        public DbContext() : this(@"Data Source=DESKTOP-N2LHC09;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False")
+        /// <summary>
+        /// Do enter you Server here
+        /// </summary>
+        private static readonly string _connectionString = "Data Source=DESKTOP-N2LHC09";
+        public DbContext() : this(@$"{_connectionString};Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False")
         {
 
         }
