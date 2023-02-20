@@ -1,14 +1,13 @@
-﻿using ATM.BLL.Interfaces;
+﻿using ATM.DAL.Database.DbQueries;
+using System.Threading.Tasks;
+using ATM.BLL.Interfaces;
 using ATM.BLL.Utilities;
 using ATM.DAL.Database;
-using ATM.DAL.Database.DbQueries;
-using ATM.DAL.Enums;
 using ATM.DAL.Models;
-using ATM.UI;
-using Microsoft.Identity.Client;
-using System;
+using ATM.DAL.Enums;
 using System.Linq;
-using System.Threading.Tasks;
+using ATM.UI;
+using System;
 
 namespace ATM.BLL.Implementation
 {
@@ -19,7 +18,6 @@ namespace ATM.BLL.Implementation
         static readonly IAtmService atmService = new AtmService();
         private readonly static Message message = new Message();
         private readonly DbQuery dbQuery = new DbQuery(new DbContext());
-        private readonly CreateAccount createAccount = new CreateAccount(new AccountType());
 
         /// <summary>
         /// Login Validation.
@@ -41,16 +39,7 @@ namespace ATM.BLL.Implementation
                 goto EnterPin;
             }
 
-       /* EnterAccountType: Console.WriteLine("Enter your account type.");
-            string accountType = Console.ReadLine() ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(accountType))
-            {
-                message.Error("Input was empty of not valid. Please try agian");
-                goto EnterAccountType;
-            }
-*/
-            //var ReturnedAccountType = createAccount.GetAccountType();
-
+     
             var UserDetails = await dbQuery.SelectAccountAsync(AccountNo, Pin);
             if (UserDetails != null)
             {
@@ -104,7 +93,6 @@ namespace ATM.BLL.Implementation
 
         /// <summary>
         /// When user wants to recet Pin
-        /// <param name="accNo"></param>
 
         public async Task ResetPin()
         {
