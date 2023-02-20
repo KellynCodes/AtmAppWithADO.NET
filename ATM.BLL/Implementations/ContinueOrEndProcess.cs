@@ -11,7 +11,7 @@ namespace ATM.UI
         private readonly IAuthService authService = new AuthService();
 
 
-        public void EndProcess()
+        public async Task EndProcess()
         {
             Console.WriteLine($"Collect your Card. Thank you for using {GetAtmData.GetData.Name}");
         }

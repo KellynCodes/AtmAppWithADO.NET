@@ -5,6 +5,7 @@ using ATM.DAL.Database.DbQueries;
 using ATM.DAL.Enums;
 using ATM.DAL.Models;
 using ATM.UI;
+using Microsoft.Identity.Client;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -107,8 +108,9 @@ namespace ATM.BLL.Implementation
 
         public async Task ResetPin()
         {
-        EnterUserID: Console.WriteLine("Enter your user ID");
-            if (!long.TryParse(Console.ReadLine(), out long userID))
+        EnterUserID: Console.WriteLine("Enter your user Pin");
+            string Pin = Console.ReadLine() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(Pin))
             {
                 message.Error("Invalid input please try again.");
                 goto EnterUserID;
@@ -120,7 +122,9 @@ namespace ATM.BLL.Implementation
                 message.Error("Input was empty.");
                 goto EnterAccNumber;
             }
-            var userInfo = AtmDB.Account.FirstOrDefault(user => user.AccountNo == accountNumber && user.UserId == userID);
+            var UserDetails = await dbQuery.SelectAccountAsync(accountNumber, Pin);
+            var userInfo = UserDetails.FirstOrDefault(user => user.AccountNo == accountNumber && user.Pin == Pin);
+
             if (userInfo == null)
             {
                 message.Error("Sorry this user does not exist. Please try again with valid user information.");
@@ -149,25 +153,26 @@ namespace ATM.BLL.Implementation
             }
         Next:
             message.AlertInfo("Enter your new pin number");
-            string Pin = Console.ReadLine() ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(Pin))
+            string newPin = Console.ReadLine() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(newPin))
             {
                 message.Error("Input was empty. Do try again.");
                 goto Next;
             }
             const int MaximumPinLength = 4;
-            if (Pin.Length > MaximumPinLength || Pin.Length < MaximumPinLength)
+            if (newPin.Length > MaximumPinLength || newPin.Length < MaximumPinLength)
             {
                 message.Error("Sorry Pin cannot be greater or less than four digits. Do try again.");
                 goto Next;
             }
-            userInfo.Pin = Pin;
-            if (userInfo.Pin == Pin)
+            await dbQuery.UpdateAccountAsync(AuthService.SessionUser.UserId, newPin);
+            if (userInfo.Pin == newPin)
             {
                 message.Success($"{userInfo.UserName} your pin have been updated successfully");
             }
             await Login();
         }
+
         /// <summary>
         /// Logout Users
         /// </summary>

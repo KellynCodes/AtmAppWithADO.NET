@@ -57,7 +57,7 @@ namespace ATM.BLL.Implementation
                     switch (answer)
                     {
                         case (int)SwitchCase.One:
-                            await CreatDb.Run();
+                            await CreatDb.Run(dbName: "Atmm");
                             break;
                             case (int)SwitchCase.Two:
                           await ReloadCash();
