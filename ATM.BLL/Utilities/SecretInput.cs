@@ -1,11 +1,13 @@
 ﻿using System.Text;
 using System;
+using ATM.BLL.Interfaces;
+using ATM.BLL.Implementation;
 
 namespace ATM.BLL.Utilities
 {
     public class SecretInput
     {
-        private static readonly MessageTwo message = new MessageTwo();
+        private static readonly IMessage message = new Message();
         public static string Hashed(string userInput = null)
         {
             const int exactInputLength = 10;

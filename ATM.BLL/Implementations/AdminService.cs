@@ -1,12 +1,14 @@
-﻿using System.Threading.Tasks;
+﻿using static ATM.DAL.Database.QueryStrings.SelectQueryStrings;
+using ATM.DAL.Database.DbQueries;
+using System.Threading.Tasks;
 using ATM.BLL.Interfaces;
+using ATM.BLL.Utilities;
 using ATM.DAL.Database;
 using ATM.DAL.Models;
 using ATM.DAL.Enums;
 using System.Linq;
 using ATM.UI;
 using System;
-using ATM.BLL.Utilities;
 
 namespace ATM.BLL.Implementation
 {
@@ -14,6 +16,7 @@ namespace ATM.BLL.Implementation
     {
         private readonly IMessage message = new Message();
         private readonly IContinueOrEndProcess continueOrEndProcess = new ContinueOrEndProcess();
+        private readonly DbQuery dbQuery = new DbQuery( new DbContext());
 
         private User SessionAdmin { get; set; }
         public decimal CashLimit { get; set; }
@@ -26,22 +29,23 @@ namespace ATM.BLL.Implementation
             {
                 message.Error("Input was empty of not valid. Please try agian");
                 goto Start;
-            }
-        EnterUserID: Console.WriteLine("Enter your Password");
+            }  
+        Password: Console.WriteLine("Enter your Password");
             string UserPassword = Console.ReadLine() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(UserPassword))
             {
                 message.Error("Input was empty of not valid. Please try agian");
-                goto EnterUserID;
+                goto Password;
             }
 
-            var UserDetails = AtmDB.Users.FirstOrDefault(user => user.Email == UserEmail && user.Password == UserPassword);
+            var GetUser = await dbQuery.SelectUserAsync(UserEmail, UserPassword, GetAdminQuery);
+            var UserDetails = GetUser.FirstOrDefault(user => user.Email == UserEmail && user.Password == UserPassword);
             SessionAdmin = UserDetails;
             if (UserDetails != null)
             {
-                message.Alert($"Welcome back {UserDetails.Email}");
-            AtmServices: Console.WriteLine("What would like to Do");
-                Console.WriteLine("1.\t Reload Cash\n2.\t Set Cash Limit\n3.\t View list of Users");
+                message.Alert($"Welcome back {UserDetails.FullName}");
+            AtmServices: Console.WriteLine("What would like to Do");    
+                Console.WriteLine("1.\t Create Database\n2.\t Reload Cash\n3.\t Set Cash Limit\n4.\t View list of Users");
                 string userInput = Console.ReadLine() ?? string.Empty;
                 if (string.IsNullOrWhiteSpace(userInput))
                 {
@@ -53,12 +57,15 @@ namespace ATM.BLL.Implementation
                     switch (answer)
                     {
                         case (int)SwitchCase.One:
+                            await CreatDb.Run();
+                            break;
+                            case (int)SwitchCase.Two:
                           await ReloadCash();
                             break;
-                        case (int)SwitchCase.Two:
+                        case (int)SwitchCase.Three:
                            await SetCashLimit();
                             break;
-                        case (int)SwitchCase.Three:
+                        case (int)SwitchCase.Four:
                         await ViewListOfUsers();
                             break;
                         default:
@@ -96,11 +103,17 @@ namespace ATM.BLL.Implementation
         EnterAmount: Console.WriteLine("Enter amount to reload");
             if (decimal.TryParse(Console.ReadLine(), out decimal amount))
             {
-                var atm = GetAtmData.GetData();
-                message.Success($"Reloading {amount}...");
-                atm.AvailableCash += amount;
-                message.Alert($"New Balance :: {atm.AvailableCash}");
-               await MainMethod.GetUserChoice();
+              var AtmInfo = await dbQuery.SelectAtmDataInfoAsync(ReturnAtmId.Id());
+              if(AtmInfo != null)
+                {
+                    foreach(var atm in AtmInfo)
+                    {
+                    message.Success($"Reloading {amount}...");
+                    atm.AvailableCash += amount;
+                    message.Alert($"New Balance :: {atm.AvailableCash}");
+                    }
+                    await MainMethod.GetUserChoice();
+                }
             }
             else
             {
@@ -109,11 +122,13 @@ namespace ATM.BLL.Implementation
             }
         }
 
-        public static async Task ViewListOfUsers()
+        public async Task ViewListOfUsers()
         {
-            foreach (var account in AtmDB.Account)
+            var Users = await dbQuery.SelectAllUserAsync();
+            message.Alert("\n These are the List of your users.");
+            foreach (var user in Users)
             {
-                Console.WriteLine($"{account.UserId} {account.UserName}");
+                Console.WriteLine($"{user.Id} {user.FullName}");
             }
            await MainMethod.Logout();
         }

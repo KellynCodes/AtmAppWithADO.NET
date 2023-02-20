@@ -2,6 +2,6 @@
 {
     public class InsertQuery
     {
-        public static string UsersTableInsertQuery { get; }
+        public static string AtmInfoQuery { get; } = @"USE Atm; INSERT INTO AtmInfo(Name, AvailableCash, Language) VALUES('Gt Tech', '600000.00', 'English')";
     }
 }

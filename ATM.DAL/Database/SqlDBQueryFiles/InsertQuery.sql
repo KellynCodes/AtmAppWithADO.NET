@@ -5,8 +5,7 @@
 	use Atm;
 	INSERT INTO Account(UserId, UserName, AccountNo, AccountType, Balance, Pin, CreateDDate) VALUES('2', 'Jenny', '12345678', '2', '20000.0', '454545', 'March 12 , 2022');
 
-	select * from Users;
-	Use Atm;
-	select * from Account;
+	USE Atm; INSERT INTO AtmInfo(Name, AvailableCash, Language) VALUES('Zitech Atm', '1000000.00', 'Nigeria Pigeon')
+	
 
-	USE Atm; SELECT Account.Id, Account.UserId, Account.Pin, Account.UserName, Account.AccountNo, Account.Balance, Account.CreatedDate FROM Account WHERE AccountNo = 14754454 AND Pin = 1234 AND AccountType = 'Current'
+	

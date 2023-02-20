@@ -7,12 +7,12 @@ using ATM.BLL.Interface;
 
 namespace ATM.BLL.Implementation
 {
-    public class CreateDatabase : ICreateDatabase
+    public class Create : ICreate
     {
         private bool _disposed;
         private readonly DbContext _dbContext;
 
-        public CreateDatabase(DbContext dbContext)
+        public Create(DbContext dbContext)
         {
             _dbContext = dbContext;
         }

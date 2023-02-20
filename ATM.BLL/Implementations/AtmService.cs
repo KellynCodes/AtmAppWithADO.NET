@@ -35,11 +35,22 @@ namespace ATM.BLL.Implementation
         public AtmService() { }
         public async Task Start()
         {
-            GetAtmData.GetData().AvailableCash = 6_000.90m;
-            Console.WriteLine($"{GetAtmData.GetData().Name} has booted!");
-            Console.WriteLine("Insert Card!");
-            string DbQueryResult = await SqlQueryMethods.Run();
-            Console.WriteLine(DbQueryResult);
+            var AtmInfo = await dbQuery.SelectAtmDataInfoAsync();
+            if (AtmInfo != null)
+            {
+                    int AtmId = 2;
+                foreach (var Info in AtmInfo)
+                {
+                    Console.WriteLine($"{AtmId++}. {Info.Name}");
+                }
+            }
+
+                var AtmData = await GetAtmData.Data();
+            if (AtmData != null)
+            {
+                Console.WriteLine($"{AtmData.Name} has booted!");
+                Console.WriteLine("Insert Card!");
+            }
         }
 
         public async Task CheckBalance()
@@ -62,15 +73,15 @@ namespace ATM.BLL.Implementation
                             message.Error("Entered value was not in the list. Please try again");
                             goto CheckBalance;
                     }
-                   EnterPin: Console.WriteLine("Enter you account pin.");
+                EnterPin: Console.WriteLine("Enter you account pin.");
                     string Pin = Console.ReadLine() ?? string.Empty;
                     if (string.IsNullOrWhiteSpace(Pin))
                     {
                         message.Error("Input cannot be Empty. Do try again.");
                         goto EnterPin;
                     }
-                  var CheckAccountType = await dbQuery.SelectAccountAsync(AuthService.SessionUser.AccountNo, Pin);
-                   // var CheckAccountType = AtmDB.Account.Where(user => user.AccountNo == AuthService.SessionUser.AccountNo && user.AccountType == _accountType);
+                    var CheckAccountType = await dbQuery.SelectAccountAsync(AuthService.SessionUser.AccountNo, Pin);
+
                     if (CheckAccountType.Any())
                     {
 
@@ -84,7 +95,7 @@ namespace ATM.BLL.Implementation
                     else
                     {
                         message.Error("Account not found. Check your account information to be certain you entered the correct account type and pin\nOR contact customer care on 09157060998");
-                       await authService.Login();
+                        await authService.Login();
                     }
                 }
                 else
@@ -106,7 +117,7 @@ namespace ATM.BLL.Implementation
             if (_days > OneWeek)
             {
                 message.Error("You have exceeded your withdrawal limit. [20k: daily and 100k: weekly]");
-               await authService.Login();
+                await authService.Login();
             }
             message.Error("Note: Withdrawal Limit:\nDaily = 20k\nWeekly = 100k");
         CheckBalance: Console.WriteLine("1.\t Current\n2.\t Savings");
@@ -131,121 +142,121 @@ namespace ATM.BLL.Implementation
                         message.Error("Entered value was not in the list. Please try again");
                         goto CheckBalance;
                 }
-             
+
             AmountToWidthDraw:
-                    Console.WriteLine("How much do you want to withdraw");
-                    Console.WriteLine("1. 500\t2. 1000\t3. 2000\n4. 5000\t5. 10000\t6. 20000\n7. Others");
-                    if (int.TryParse(Console.ReadLine(), out int choice))
-                        switch (choice)
-                        {
-                            case (int)SwitchCase.One:
-                                EnteredAmount = 500;
+                Console.WriteLine("How much do you want to withdraw");
+                Console.WriteLine("1. 500\t2. 1000\t3. 2000\n4. 5000\t5. 10000\t6. 20000\n7. Others");
+                if (int.TryParse(Console.ReadLine(), out int choice))
+                    switch (choice)
+                    {
+                        case (int)SwitchCase.One:
+                            EnteredAmount = 500;
 
-                                goto EnterDenomination;
-                            case (int)SwitchCase.Two:
-                                EnteredAmount = 1000;
+                            goto EnterDenomination;
+                        case (int)SwitchCase.Two:
+                            EnteredAmount = 1000;
 
-                                goto EnterDenomination;
-                            case (int)SwitchCase.Three:
-                                EnteredAmount = 2000;
+                            goto EnterDenomination;
+                        case (int)SwitchCase.Three:
+                            EnteredAmount = 2000;
 
-                                goto EnterDenomination;
-                            case (int)SwitchCase.Four:
-                                EnteredAmount = 5000;
+                            goto EnterDenomination;
+                        case (int)SwitchCase.Four:
+                            EnteredAmount = 5000;
 
-                                goto EnterDenomination;
-                            case (int)SwitchCase.Five:
-                                EnteredAmount = 10000;
-                                goto EnterDenomination;
-                            case (int)SwitchCase.Six:
-                                EnteredAmount = 20000;
-                                goto EnterDenomination;
-                            case (int)SwitchCase.Seven:
-                                goto Others;
-                            default:
-                                message.Error("Input was not in the list. Please try again.");
-                                goto AmountToWidthDraw;
-                        }
-                    Others: Console.WriteLine("How much do you want to withdraw");
-                    //create a funciton that will be called here in an if statment
-
-                    if (!decimal.TryParse(Console.ReadLine(), out ChoiceAmount))
-                    {
-                        message.Error("Input was not valid. Please enter only digits");
-                        goto AmountToWidthDraw;
-                    }
-                EnterDenomination: Console.WriteLine("Enter denomination to despense");
-
-                    if (ChoiceAmount <= 0)
-                    {
-                        Amount = EnteredAmount;
-                    }
-                    else if (ChoiceAmount > 0)
-                    {
-                        Amount = ChoiceAmount;
-                    }
-                    var atm = GetAtmData.GetData();
-                    if (Amount > atm.AvailableCash)
-                    {
-                        message.Alert($"Sorry atm is out of cash. Available amount is {atm.AvailableCash}");
-                        /* Program.GetUserChoice();*/
-                    }
-                    if (Amount > (int)WithdrawalLimit.Weekly)
-                    {
-                        message.Error("You cannot withdraw more than 100k in a week");
-                        goto AmountToWidthDraw;
-                    }
-                    if (Amount == (int)WithdrawalLimit.Daily)
-                    {
-                        _days += Aday;
-                    }
-                    if (Amount == (int)WithdrawalLimit.Weekly)
-                    {
-                        _days = OneWeek;
-                    }
-                    Console.WriteLine("1.\t 1000\t2.\t 500\n3.\t 200");
-                    if (int.TryParse(Console.ReadLine(), out int CashDenomination))
-                    {
-                        switch (CashDenomination)
-                        {
-                            case (int)SwitchCase.One:
-                                _cashDenomination = (int)Denominations.OneThousand;
-                                goto nextBlock;
-                            case (int)SwitchCase.Two:
-                                _cashDenomination = (int)Denominations.FiveHundred;
-                                goto nextBlock;
-
-                            case (int)SwitchCase.Three:
-                                _cashDenomination = (int)Denominations.TwoHundred;
-                                goto nextBlock;
-                            default:
-                                message.Error("Input is not available in the options. Please try again.");
-                                goto EnterDenomination;
-                        }
-                    }
-                    else
-                    {
-                        message.Error("Invalid input. Please try again.");
-                        goto EnterDenomination;
-                    }
-                nextBlock:
-                        if (Amount >= AuthService.SessionUser.Balance)
-                        {
-                            message.Error("Insufficient balance");
+                            goto EnterDenomination;
+                        case (int)SwitchCase.Five:
+                            EnteredAmount = 10000;
+                            goto EnterDenomination;
+                        case (int)SwitchCase.Six:
+                            EnteredAmount = 20000;
+                            goto EnterDenomination;
+                        case (int)SwitchCase.Seven:
+                            goto Others;
+                        default:
+                            message.Error("Input was not in the list. Please try again.");
                             goto AmountToWidthDraw;
-                        }
-                        else
-                        {
+                    }
+                Others: Console.WriteLine("How much do you want to withdraw");
+                //create a funciton that will be called here in an if statment
+
+                if (!decimal.TryParse(Console.ReadLine(), out ChoiceAmount))
+                {
+                    message.Error("Input was not valid. Please enter only digits");
+                    goto AmountToWidthDraw;
+                }
+            EnterDenomination: Console.WriteLine("Enter denomination to despense");
+
+                if (ChoiceAmount <= 0)
+                {
+                    Amount = EnteredAmount;
+                }
+                else if (ChoiceAmount > 0)
+                {
+                    Amount = ChoiceAmount;
+                }
+                var atm = GetAtmData.GetData;
+                if (Amount > atm.AvailableCash)
+                {
+                    message.Alert($"Sorry atm is out of cash. Available amount is {atm.AvailableCash}");
+                    /* Program.GetUserChoice();*/
+                }
+                if (Amount > (int)WithdrawalLimit.Weekly)
+                {
+                    message.Error("You cannot withdraw more than 100k in a week");
+                    goto AmountToWidthDraw;
+                }
+                if (Amount == (int)WithdrawalLimit.Daily)
+                {
+                    _days += Aday;
+                }
+                if (Amount == (int)WithdrawalLimit.Weekly)
+                {
+                    _days = OneWeek;
+                }
+                Console.WriteLine("1.\t 1000\t2.\t 500\n3.\t 200");
+                if (int.TryParse(Console.ReadLine(), out int CashDenomination))
+                {
+                    switch (CashDenomination)
+                    {
+                        case (int)SwitchCase.One:
+                            _cashDenomination = (int)Denominations.OneThousand;
+                            goto nextBlock;
+                        case (int)SwitchCase.Two:
+                            _cashDenomination = (int)Denominations.FiveHundred;
+                            goto nextBlock;
+
+                        case (int)SwitchCase.Three:
+                            _cashDenomination = (int)Denominations.TwoHundred;
+                            goto nextBlock;
+                        default:
+                            message.Error("Input is not available in the options. Please try again.");
+                            goto EnterDenomination;
+                    }
+                }
+                else
+                {
+                    message.Error("Invalid input. Please try again.");
+                    goto EnterDenomination;
+                }
+            nextBlock:
+                if (Amount >= AuthService.SessionUser.Balance)
+                {
+                    message.Error("Insufficient balance");
+                    goto AmountToWidthDraw;
+                }
+                else
+                {
                     await dbQuery.UpdateAccountAsync(AuthService.SessionUser.UserId, Amount);
-                            GetAtmData.GetData().AvailableCash -= Amount;
-                   var UserAccount = await dbQuery.SelectAccountAsync(AuthService.SessionUser.AccountNo);
-                            foreach(var account in UserAccount)
+                    await dbQuery.UpdateAtmInfoAsync(GetAtmData.GetData.Id, Amount);
+                    var UserAccount = await dbQuery.SelectAccountAsync(AuthService.SessionUser.AccountNo);
+                    foreach (var account in UserAccount)
                     {
                         message.Success($"Transaction successfull!. {Amount} have been debited from your account.  Your new account balance is {account.Balance}");
                     }
-                            message.AlertInfo($"Cash denominations: {_cashDenomination}");
-                        }
-                   await continueOrEndProcess.Answer();
+                    message.AlertInfo($"Cash denominations: {_cashDenomination}");
+                }
+                await continueOrEndProcess.Answer();
 
             }
             else
@@ -298,7 +309,7 @@ namespace ATM.BLL.Implementation
                 message.Error("Input was empty or not valid");
                 goto EnterAccountNumber;
             }
-          var FetchedAccount = await dbQuery.SelectAccountAsync(accountNumber);
+            var FetchedAccount = await dbQuery.SelectAccountAsync(accountNumber);
             var Recepient = FetchedAccount.FirstOrDefault(user => user.AccountNo == accountNumber);
             if (Recepient == null)
             {
@@ -337,7 +348,7 @@ namespace ATM.BLL.Implementation
                         var Sender = SenderAccount.FirstOrDefault(user => user.AccountNo == AuthService.SessionUser.AccountNo);
                         var SenderAmount = Sender.Balance -= amount;
 
-                       await dbQuery.UpdateAccountAsync(AuthService.SessionUser.UserId, SenderAmount);
+                        await dbQuery.UpdateAccountAsync(AuthService.SessionUser.UserId, SenderAmount);
                         await dbQuery.UpdateAccountAsync(Recepient.UserId, amount);
 
                         message.Success($"Transaction successfull!.");
@@ -367,7 +378,7 @@ namespace ATM.BLL.Implementation
                     else if (answer.Trim().ToUpper() == "NO")
                     {
                         message.Error("Transaction Canceled");
-                       await authService.LogOut();
+                        await authService.LogOut();
                     }
                     else
                     {
@@ -409,7 +420,7 @@ namespace ATM.BLL.Implementation
             }
 
             await dbQuery.UpdateAccountAsync(AuthService.SessionUser.UserId, amount);
-            GetAtmData.GetData().AvailableCash -= amount;
+            await dbQuery.UpdateAtmInfoAsync(GetAtmData.GetData.Id, amount);
             var UserAccount = await dbQuery.SelectAccountAsync(AuthService.SessionUser.AccountNo);
             foreach (var account in UserAccount)
             {
@@ -430,13 +441,13 @@ namespace ATM.BLL.Implementation
                 switch (answer)
                 {
                     case (int)SwitchCase.One:
-                       await billPayment.Airtime();
+                        await billPayment.Airtime();
                         break;
                     case (int)SwitchCase.Two:
-                      await  billPayment.CableTransmission();
+                        await billPayment.CableTransmission();
                         break;
                     case (int)SwitchCase.Three:
-                      await  billPayment.Nepa();
+                        await billPayment.Nepa();
                         break;
                     default:
                         message.Error("Entered input was not in the option.");
@@ -496,7 +507,7 @@ namespace ATM.BLL.Implementation
 
         public async Task ReloadCash()
         {
-           await _adminService.ReloadCash();
+            await _adminService.ReloadCash();
         }
     }
 }
