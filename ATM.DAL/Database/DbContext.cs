@@ -15,7 +15,7 @@ namespace ATM.DAL.Database
         /// <summary>
         /// Do enter you Server here
         /// </summary>
-        private static readonly string _connectionString = "Data Source=DESKTOP-N2LHC09";
+        private static readonly string _connectionString = "EnterYourServerNameHere";
         public DbContext() : this(@$"{_connectionString};Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False")
         {
 
