@@ -10,7 +10,7 @@ namespace ATM.BLL.Utilities
     {
         private static readonly IAtmService atmService = new AtmService(new AdminService());
         private static readonly IAuthService authService = new AuthService();
-        private static readonly IAdminService _adminService = new AdminService();
+        private static readonly IAdminService adminService = new AdminService();
         private static readonly IMessage message = new Message();
 
         public static async Task GetUserChoice()
@@ -24,7 +24,7 @@ namespace ATM.BLL.Utilities
                 switch (Choice)
                 {
                     case (int)SwitchCase.One:
-                      await  _adminService.LoginAdmin();
+                      await  adminService.LoginAdmin();
                         break;
                     case (int)SwitchCase.Two:
                         Console.WriteLine("Please provide your details");

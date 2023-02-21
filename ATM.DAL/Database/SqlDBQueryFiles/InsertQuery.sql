@@ -7,5 +7,6 @@
 
 	USE Atm; INSERT INTO AtmInfo(Name, AvailableCash, Language) VALUES('Zitech Atm', '1000000.00', 'Nigeria Pigeon')
 	
+	USE AtmMachine; INSERT INTO Transactions(Sender, Receiver, TransactionType, TransactionDate) VALUES('2', '1', 'Deposit', '23 February 2023');
 
 	

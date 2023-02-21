@@ -16,7 +16,8 @@ namespace ATM.BLL.Implementation
     {
         private readonly IMessage message = new Message();
         private readonly IContinueOrEndProcess continueOrEndProcess = new ContinueOrEndProcess();
-        private readonly DbQuery dbQuery = new DbQuery( new DbContext());
+        private readonly SelectQuery selectQuery = new SelectQuery( new DbContext());
+       
 
         private User SessionAdmin { get; set; }
         public decimal CashLimit { get; set; }
@@ -38,7 +39,7 @@ namespace ATM.BLL.Implementation
                 goto Password;
             }
 
-            var GetUser = await dbQuery.SelectUserAsync(UserEmail, UserPassword, GetAdminQuery);
+            var GetUser = await selectQuery.SelectUserAsync(UserEmail, UserPassword, GetAdminQuery);
             var UserDetails = GetUser.FirstOrDefault(user => user.Email == UserEmail && user.Password == UserPassword);
             SessionAdmin = UserDetails;
             if (UserDetails != null)
@@ -57,7 +58,7 @@ namespace ATM.BLL.Implementation
                     switch (answer)
                     {
                         case (int)SwitchCase.One:
-                            await CreatDb.Run(dbName: "Atmm");
+                            await CreatDb.Run();
                             break;
                             case (int)SwitchCase.Two:
                           await ReloadCash();
@@ -103,7 +104,7 @@ namespace ATM.BLL.Implementation
         EnterAmount: Console.WriteLine("Enter amount to reload");
             if (decimal.TryParse(Console.ReadLine(), out decimal amount))
             {
-              var AtmInfo = await dbQuery.SelectAtmDataInfoAsync(ReturnAtmId.Id());
+              var AtmInfo = await selectQuery.SelectAtmDataInfoAsync(ReturnAtmId.Id());
               if(AtmInfo != null)
                 {
                     foreach(var atm in AtmInfo)
@@ -124,7 +125,7 @@ namespace ATM.BLL.Implementation
 
         public async Task ViewListOfUsers()
         {
-            var Users = await dbQuery.SelectAllUserAsync();
+            var Users = await selectQuery.SelectAllUserAsync();
             message.Alert("\n These are the List of your users.");
             foreach (var user in Users)
             {

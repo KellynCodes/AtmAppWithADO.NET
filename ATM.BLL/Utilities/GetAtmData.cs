@@ -1,7 +1,6 @@
 ﻿using ATM.DAL.Database.DbQueries;
 using ATM.DAL.Database;
 using ATM.DAL.Models;
-using System;
 using System.Threading.Tasks;
 
 namespace ATM.BLL.Utilities
@@ -12,8 +11,8 @@ namespace ATM.BLL.Utilities
         public static async Task<Atm> Data()
         {
         Atm _atm = new Atm();
-            DbQuery dbQuery = new DbQuery(new DbContext());
-            var AtmInfo = await dbQuery.SelectAtmDataInfoAsync(ReturnAtmId.Id());
+            SelectQuery selectQuery = new SelectQuery(new DbContext());
+            var AtmInfo = await selectQuery.SelectAtmDataInfoAsync(ReturnAtmId.Id());
             if (AtmInfo != null)
             {
                 foreach (var Info in AtmInfo)

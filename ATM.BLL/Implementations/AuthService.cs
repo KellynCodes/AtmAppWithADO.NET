@@ -17,7 +17,8 @@ namespace ATM.BLL.Implementation
         public static Account SessionUser { get; set; } = new Account();
         static readonly IAtmService atmService = new AtmService();
         private readonly static Message message = new Message();
-        private readonly DbQuery dbQuery = new DbQuery(new DbContext());
+        private readonly SelectQuery selectQuery = new SelectQuery(new DbContext());
+        private readonly UpdateQuery updateQuery = new UpdateQuery(new DbContext());
 
         /// <summary>
         /// Login Validation.
@@ -40,7 +41,7 @@ namespace ATM.BLL.Implementation
             }
 
      
-            var UserDetails = await dbQuery.SelectAccountAsync(AccountNo, Pin);
+            var UserDetails = await selectQuery.SelectAccountAsync(AccountNo, Pin);
             if (UserDetails != null)
             {
                 foreach (var user in UserDetails)
@@ -110,7 +111,7 @@ namespace ATM.BLL.Implementation
                 message.Error("Input was empty.");
                 goto EnterAccNumber;
             }
-            var UserDetails = await dbQuery.SelectAccountAsync(accountNumber, Pin);
+            var UserDetails = await selectQuery.SelectAccountAsync(accountNumber, Pin);
             var userInfo = UserDetails.FirstOrDefault(user => user.AccountNo == accountNumber && user.Pin == Pin);
 
             if (userInfo == null)
@@ -153,7 +154,7 @@ namespace ATM.BLL.Implementation
                 message.Error("Sorry Pin cannot be greater or less than four digits. Do try again.");
                 goto Next;
             }
-            await dbQuery.UpdateAccountAsync(AuthService.SessionUser.UserId, newPin);
+            await updateQuery.UpdateAccountAsync(AuthService.SessionUser.UserId, newPin);
             if (userInfo.Pin == newPin)
             {
                 message.Success($"{userInfo.UserName} your pin have been updated successfully");

@@ -6,3 +6,4 @@
 	use Atm; Select * from account;
 	select * from users;
 	USE Atm; SELECT Account.Id, Account.UserId, Account.Pin, Account.UserName, Account.AccountNo, Account.Balance, Account.CreatedDate FROM Account WHERE AccountNo = 14754454 AND Pin = 1234 AND AccountType = 'Current'
+		select * from Transactions;

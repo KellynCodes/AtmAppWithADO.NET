@@ -1,6 +1,4 @@
-﻿using ATM.DAL.Enums;
-
-namespace ATM.DAL.Models
+﻿namespace ATM.DAL.Models
 {
     internal class Admin : User
     {
@@ -9,7 +7,7 @@ namespace ATM.DAL.Models
         {
         }
 
-        public override Role Role { get; } = Role.Admin;
+        public override string Role { get; set; } 
 
     }
 }
