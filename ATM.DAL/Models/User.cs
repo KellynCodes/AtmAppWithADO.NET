@@ -1,6 +1,4 @@
-﻿using ATM.DAL.Enums;
-
-namespace ATM.DAL.Models
+﻿namespace ATM.DAL.Models
 {
     public class User
     {
@@ -19,7 +17,7 @@ namespace ATM.DAL.Models
         public string Password { get; set; }
         public string UserBank { get; set; }
         public string PhoneNumber { get; set; }
-        public virtual Role Role { get; }
+        public virtual string Role { get; set; }
 
     }
 }

@@ -19,11 +19,15 @@ namespace ATM.BLL.Implementation
         private static int _cashDenomination;
         private static decimal ChoiceAmount;
 
-        private readonly IAuthService authService = new AuthService();
         private readonly IContinueOrEndProcess continueOrEndProcess = new ContinueOrEndProcess();
         private readonly ICreateAccount createAccount = new CreateAccount();
+        private readonly IAuthService authService = new AuthService();
         public static readonly IMessage message = new Message();
-        private readonly DbQuery dbQuery = new DbQuery(new DbContext());
+
+        private readonly InsertQuery insertQuery = new InsertQuery(new DbContext());
+        private readonly UpdateQuery updateQuery = new UpdateQuery(new DbContext());
+        private readonly DeleteQuery deleteQuery = new DeleteQuery(new DbContext());
+        private readonly SelectQuery selectQuery = new SelectQuery(new DbContext());
 
         public static int _days = 0;
 
@@ -37,37 +41,8 @@ namespace ATM.BLL.Implementation
         public AtmService() { }
         public async Task Start()
         {
-            try
-            {
-                await CreatDb.Run(dbName: "AtmDb");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Database Already exist: See System error");
-                goto Continue;
-            }
-        Continue:
-            var AtmInfo = await dbQuery.SelectAtmDataInfoAsync();
-            if (AtmInfo != null)
-            {
-                    int AtmId = 2;
-                foreach (var Info in AtmInfo)
-                {
-                    Console.WriteLine($"{AtmId++}. {Info.Name}");
-                }
-            }
-
-                var AtmData = await GetAtmData.Data();
-            if (AtmData != null && AtmData.Id != 0)
-            {
-                Console.WriteLine($"{AtmData.Name} has booted!");
-                Console.WriteLine("Insert Card!");
-            }
-            else
-            {
-                message.Error("Atm does not exist.");
-                await Start();
-            }
+            message.AlertInfo(await CreatDb.Run());
+            await StartAtm.Start();
         }
 
         public async Task CheckBalance()
@@ -97,7 +72,7 @@ namespace ATM.BLL.Implementation
                         message.Error("Input cannot be Empty. Do try again.");
                         goto EnterPin;
                     }
-                    var CheckAccountType = await dbQuery.SelectAccountAsync(AuthService.SessionUser.AccountNo, Pin);
+                    var CheckAccountType = await selectQuery.SelectAccountAsync(AuthService.SessionUser.AccountNo, Pin);
 
                     if (CheckAccountType.Any())
                     {
@@ -112,7 +87,7 @@ namespace ATM.BLL.Implementation
                     else
                     {
                         message.Error("Account not found. Check your account information to be certain you entered the correct account type and pin\nOR contact customer care on 09157060998");
-                        await authService.Login(); 
+                        await authService.Login();
                     }
                 }
                 else
@@ -195,7 +170,6 @@ namespace ATM.BLL.Implementation
                             goto AmountToWidthDraw;
                     }
                 Others: Console.WriteLine("How much do you want to withdraw");
-                //create a funciton that will be called here in an if statment
 
                 if (!decimal.TryParse(Console.ReadLine(), out ChoiceAmount))
                 {
@@ -216,7 +190,6 @@ namespace ATM.BLL.Implementation
                 if (Amount > atm.AvailableCash)
                 {
                     message.Alert($"Sorry atm is out of cash. Available amount is {atm.AvailableCash}");
-                    /* Program.GetUserChoice();*/
                 }
                 if (Amount > (int)WithdrawalLimit.Weekly)
                 {
@@ -264,9 +237,16 @@ namespace ATM.BLL.Implementation
                 }
                 else
                 {
-                    await dbQuery.UpdateAccountAsync(AuthService.SessionUser.UserId, Amount);
-                    await dbQuery.UpdateAtmInfoAsync(GetAtmData.GetData.Id, Amount);
-                    var UserAccount = await dbQuery.SelectAccountAsync(AuthService.SessionUser.AccountNo);
+                    decimal debitAmount = AuthService.SessionUser.Balance -= Amount;
+                    decimal debitAtmAmount = GetAtmData.GetData.AvailableCash -= Amount;
+
+                    await updateQuery.UpdateAccountAsync(AuthService.SessionUser.UserId, debitAmount);
+                    await updateQuery.UpdateAtmInfoAsync(GetAtmData.GetData.Id, debitAtmAmount);
+
+                    string TransactionDate = DateTime.Now.ToLongDateString();
+                    await insertQuery.InsertIntoTransactionsTable(senderSessionUser: AuthService.SessionUser.Id, reciever: AuthService.SessionUser.Id, transactionAmount: Amount, transactionType: "Withdraw", transactionDate: TransactionDate);
+
+                    var UserAccount = await selectQuery.SelectAccountAsync(AuthService.SessionUser.AccountNo);
                     foreach (var account in UserAccount)
                     {
                         message.Success($"Transaction successfull!. {Amount} have been debited from your account.  Your new account balance is {account.Balance}");
@@ -326,7 +306,7 @@ namespace ATM.BLL.Implementation
                 message.Error("Input was empty or not valid");
                 goto EnterAccountNumber;
             }
-            var FetchedAccount = await dbQuery.SelectAccountAsync(accountNumber);
+            var FetchedAccount = await selectQuery.SelectAccountAsync(accountNumber);
             var Recepient = FetchedAccount.FirstOrDefault(user => user.AccountNo == accountNumber);
             if (Recepient == null)
             {
@@ -346,51 +326,53 @@ namespace ATM.BLL.Implementation
             {
                 string userBank = DefaultSwitchCaseMethod.SwitchCase(bank);
 
-                question: Console.WriteLine($"Do you want to transfer {amount} to {Recepient?.UserName}");
-                    string answer = Console.ReadLine() ?? string.Empty;
-                    if (answer.Trim().ToUpper() == "YES")
+            question: Console.WriteLine($"Do you want to transfer {amount} to {Recepient?.UserName}");
+                string answer = Console.ReadLine() ?? string.Empty;
+                if (answer.Trim().ToUpper() == "YES")
+                {
+                    var SenderAccount = await selectQuery.SelectAccountAsync(AuthService.SessionUser.AccountNo);
+                    var Sender = SenderAccount.FirstOrDefault(user => user.AccountNo == AuthService.SessionUser.AccountNo);
+                    var SenderAmount = Sender.Balance -= amount;
+
+                    await updateQuery.UpdateAccountAsync(AuthService.SessionUser.UserId, SenderAmount);
+                    await updateQuery.UpdateAccountAsync(Recepient.UserId, amount);
+                    string TransactionDate = DateTime.Now.ToLongDateString();
+                    await insertQuery.InsertIntoTransactionsTable(senderSessionUser: AuthService.SessionUser.Id, reciever: Recepient.UserId, transactionAmount: amount, transactionType: "Transfer", transactionDate: TransactionDate);
+
+                    message.Success($"Transaction successfull!.");
+                DoYouWantReceipt: Console.WriteLine("Do you need receipt[YES/NO]");
+                    string userInput = Console.ReadLine() ?? string.Empty;
+
+                    if (string.IsNullOrWhiteSpace(userInput))
                     {
-                        var SenderAccount = await dbQuery.SelectAccountAsync(AuthService.SessionUser.AccountNo);
-                        var Sender = SenderAccount.FirstOrDefault(user => user.AccountNo == AuthService.SessionUser.AccountNo);
-                        var SenderAmount = Sender.Balance -= amount;
-
-                        await dbQuery.UpdateAccountAsync(AuthService.SessionUser.UserId, SenderAmount);
-                        await dbQuery.UpdateAccountAsync(Recepient.UserId, amount);
-
-                        message.Success($"Transaction successfull!.");
-                    DoYouWantReceipt: Console.WriteLine("Do you need receipt[YES/NO]");
-                        string userInput = Console.ReadLine() ?? string.Empty;
-
-                        if (string.IsNullOrWhiteSpace(userInput))
-                        {
-                            message.Error("Input was empty. Please try again");
-                            goto DoYouWantReceipt;
-                        }
-                        if (userInput.Trim().ToUpper() == "YES")
-                        {
-                            message.Success($"Transaction successfull!. {AuthService.SessionUser.UserName} {amount} has been debited from your account. You just transfered {amount} to {Recepient.UserName} on {DateTime.Now.ToLongDateString()}\n Your new balance is {Sender.Balance}");
-                            await continueOrEndProcess.Answer();
-                        }
-                        else if (userInput.Trim().ToUpper() == "NO")
-                        {
-                            await continueOrEndProcess.Answer();
-                        }
-                        else
-                        {
-                            message.Error("Please enter [NO/YES]");
-                            goto DoYouWantReceipt;
-                        }
+                        message.Error("Input was empty. Please try again");
+                        goto DoYouWantReceipt;
                     }
-                    else if (answer.Trim().ToUpper() == "NO")
+                    if (userInput.Trim().ToUpper() == "YES")
                     {
-                        message.Error("Transaction Canceled");
-                        await authService.LogOut();
+                        message.Success($"Transaction successfull!. {AuthService.SessionUser.UserName} {amount} has been debited from your account. You just transfered {amount} to {Recepient.UserName} on {DateTime.Now.ToLongDateString()}\n Your new balance is {Sender.Balance}");
+                        await continueOrEndProcess.Answer();
+                    }
+                    else if (userInput.Trim().ToUpper() == "NO")
+                    {
+                        await continueOrEndProcess.Answer();
                     }
                     else
                     {
-                        message.Error("Please enter [NO/YES] for us to be sure you don't want to continue with the transaction.");
-                        goto question;
+                        message.Error("Please enter [NO/YES]");
+                        goto DoYouWantReceipt;
                     }
+                }
+                else if (answer.Trim().ToUpper() == "NO")
+                {
+                    message.Error("Transaction Canceled");
+                    await authService.LogOut();
+                }
+                else
+                {
+                    message.Error("Please enter [NO/YES] for us to be sure you don't want to continue with the transaction.");
+                    goto question;
+                }
             }
             else
             {
@@ -406,22 +388,33 @@ namespace ATM.BLL.Implementation
 
         public async Task Deposit()
         {
-        //Get amount to deposit;
-        EnterAmount: message.Alert("Enter amount you want to deposit");
+        EnterAmount: message.AlertInfo("Enter amount you want to deposit");
             if (!decimal.TryParse(Console.ReadLine(), out decimal amount))
             {
                 message.Error("Invalid input. Please enter only numbers.");
                 goto EnterAmount;
             }
-            if (amount > (decimal)WithdrawalLimit.Daily)
+
+            const decimal AmountAtmCanTakePerTransaction = 40_000.00m;
+            if (amount > AmountAtmCanTakePerTransaction)
             {
-                message.Error("Amount should not be greater than 20k.");
+                message.Error("Amount should not be greater than 40k.");
                 goto EnterAmount;
             }
 
-            await dbQuery.UpdateAccountAsync(AuthService.SessionUser.UserId, amount);
-            await dbQuery.UpdateAtmInfoAsync(GetAtmData.GetData.Id, amount);
-            var UserAccount = await dbQuery.SelectAccountAsync(AuthService.SessionUser.AccountNo);
+            decimal updateAtmAvailabelCash = GetAtmData.GetData.AvailableCash += amount;
+            decimal UpdateUserAvailableBalance = AuthService.SessionUser.Balance += amount;
+
+            await updateQuery.UpdateAccountAsync(AuthService.SessionUser.UserId, UpdateUserAvailableBalance);
+
+            int AtmId = GetAtmData.GetData.Id;
+            await updateQuery.UpdateAtmInfoAsync(AtmId, updateAtmAvailabelCash);
+
+            string TransactionDate = DateTime.Now.ToLongDateString();
+            await insertQuery.InsertIntoTransactionsTable(senderSessionUser: AuthService.SessionUser.Id, reciever: AuthService.SessionUser.Id, transactionAmount: amount, transactionType: "Deposit", transactionDate: TransactionDate);
+
+            var UserAccount = await selectQuery.SelectAccountAsync(AuthService.SessionUser.AccountNo);
+
             foreach (var account in UserAccount)
             {
                 message.AlertInfo($"{account.UserName} your just deposited {amount} to your account {account.AccountNo}. Your new balance is {account.Balance}");
@@ -486,10 +479,14 @@ namespace ATM.BLL.Implementation
                 Password = userPassword,
                 PhoneNumber = phoneNumber,
                 UserBank = "Gt Bank",
+                Role = "Customer"
             };
+
+            var GetUserFromDb = await selectQuery.SelectAllUserAsync();
+            int userID = GetUserFromDb.Last().Id + 1;
             var AccountData = new Account
             {
-                UserId = 7,
+                UserId = userID,
                 UserName = userName,
                 AccountNo = accountNumber,
                 AccountType = accountType,
@@ -498,8 +495,8 @@ namespace ATM.BLL.Implementation
                 CreatedDate = createdDate
             };
 
-
-            await dbQuery.CreateUserAndAccountAsync(AccountData, UserData);
+           
+            await insertQuery.CreateUserAndAccountAsync(AccountData, UserData);
             message.Success($"{userName} your account have been created successfully!.");
             message.AlertInfo($"Your account number is {accountNumber}");
             message.AlertInfo($"Make sure you copy your account [{accountNumber}].");
